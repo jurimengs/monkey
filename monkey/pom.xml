@@ -158,7 +158,7 @@
             <dependency>
                 <groupId>org.owasp.antisamy</groupId>
                 <artifactId>antisamy</artifactId>
-                <version>1.5.3</version>
+                <version>1.5.7</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.commons</groupId>
@@ -195,8 +195,8 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
                 <executions>
-                    <execution> <!-- °ó¶¨source²å¼þµ½MavenµÄÉúÃüÖÜÆÚ -->
-                        <phase>compile</phase> <!--ÔÚÉúÃüÖÜÆÚºóÖ´ÐÐ°ó¶¨µÄsource²å¼þµÄgoals -->
+                    <execution> <!-- ç»‘å®šsourceæ’ä»¶åˆ°Mavençš„ç”Ÿå‘½å‘¨æœŸ -->
+                        <phase>compile</phase> <!--åœ¨ç”Ÿå‘½å‘¨æœŸåŽæ‰§è¡Œç»‘å®šçš„sourceæ’ä»¶çš„goals -->
                         <goals>
                             <goal>jar-no-fork</goal>
                         </goals>
