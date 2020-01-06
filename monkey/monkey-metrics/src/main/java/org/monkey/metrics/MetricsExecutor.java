@@ -5,17 +5,16 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.stereotype.Component;
-
-@Component
-public class MetricsExecutor implements InitializingBean{
+public class MetricsExecutor {
     private static final String PRINTER = "printer";
     private static final int period = 3;
     private static final int initialDelay = 0;
     
-    @Override
-    public void afterPropertiesSet() throws Exception {
+    public MetricsExecutor() {
+        start();
+    }
+    
+    private void start() {
         // another thread to print host cpu
         ScheduledExecutorService printer = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
             @Override
