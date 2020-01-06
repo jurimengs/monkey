@@ -5,7 +5,7 @@ package org.monkey.db.face.connection;
  * @author jurimengs
  *
  */
-public interface Storer<K, T> {
+public interface Store<K, T> {
     /**
      * 如果有则更新，如果没有则添加
      * @param key

@@ -8,7 +8,7 @@ import java.util.List;
  * @author jurimengs
  *
  */
-public interface Commection<T> {
+public interface Mapper<T> {
     void update(T object);
     
     void save(T object);

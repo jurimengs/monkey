@@ -1,4 +1,4 @@
-package org.monkey.db.connection;
+package org.monkey.db.core;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;

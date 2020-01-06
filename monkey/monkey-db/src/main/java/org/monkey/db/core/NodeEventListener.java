@@ -1,4 +1,4 @@
-package org.monkey.db.connection;
+package org.monkey.db.core;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;

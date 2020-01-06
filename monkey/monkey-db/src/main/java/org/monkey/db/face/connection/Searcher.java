@@ -5,6 +5,6 @@ package org.monkey.db.face.connection;
  * @author jurimengs
  *
  */
-public interface Searcher<K, T> extends Storer<K, T> {
+public interface Searcher<K, T> extends Store<K, T> {
     
 }

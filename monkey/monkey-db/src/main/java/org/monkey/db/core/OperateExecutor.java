@@ -1,4 +1,4 @@
-package org.monkey.db.connection;
+package org.monkey.db.core;
 
 import org.monkey.db.face.connection.Executor;
 

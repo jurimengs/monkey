@@ -1,6 +1,6 @@
-package org.monkey.db.connection;
+package org.monkey.db.core;
 
-import org.monkey.db.connection.HashStore.EventType;
+import org.monkey.db.core.HashStore.EventType;
 
 public class Operate<T> {
     private T object;

@@ -1,13 +1,12 @@
-package org.monkey.db.connection;
+package org.monkey.db.core;
 
 import java.lang.reflect.Field;
-import java.sql.Connection;
 import java.util.List;
 
 import org.monkey.db.exception.BeanException;
 import org.monkey.db.face.annotation.Id;
-import org.monkey.db.face.connection.Commection;
-import org.monkey.db.face.connection.Searcher;
+import org.monkey.db.face.connection.Mapper;
+import org.monkey.db.face.connection.Store;
 
 import com.baomidou.mybatisplus.annotation.TableId;
 
@@ -15,13 +14,12 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @SuppressWarnings("unchecked")
-public class DefaultCommection<T> implements Commection<T> {
-    private final Searcher<String, T> store = StoreFactory.getInstance().createStore();
+public class MonkeyMapper<T> implements Mapper<T> {
+    private final Store<String, T> store = StoreFactory.getInstance().createStore();
     private PrimaryFieldCache cache = PrimaryFieldCache.getInstance();
     
     @Override
     public void update(T object) {
-        Connection con = null;
         if(object == null) {
             throw new RuntimeException("fooldb: null can not be updated");
         }

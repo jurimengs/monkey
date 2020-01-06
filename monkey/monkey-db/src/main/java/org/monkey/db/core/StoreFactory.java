@@ -1,4 +1,4 @@
-package org.monkey.db.connection;
+package org.monkey.db.core;
 
 public class StoreFactory {
     private static final StoreFactory sf = new StoreFactory();

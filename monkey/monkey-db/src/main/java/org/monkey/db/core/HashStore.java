@@ -1,4 +1,4 @@
-package org.monkey.db.connection;
+package org.monkey.db.core;
 
 import org.apache.commons.lang3.StringUtils;
 import org.monkey.db.face.connection.EventListener;
