@@ -105,6 +105,7 @@ public class MonkeyMapper<T> implements Mapper<T> {
             for (Field field : fields) {
                 if(field.getAnnotation(TableId.class) != null || 
                         field.getAnnotation(Id.class) != null) {
+                    field.setAccessible(Boolean.TRUE);
                     cache.setField(clazz, field);
                     return field;
                 }

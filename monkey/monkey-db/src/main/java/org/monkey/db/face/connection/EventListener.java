@@ -6,4 +6,6 @@ public interface EventListener<T> {
     void addEvent(Operate<T> operate);
     
     void run();
+    
+    public static final String CLUSTER_SYNCHRONIZER = "clusterSynchronizer";
 }

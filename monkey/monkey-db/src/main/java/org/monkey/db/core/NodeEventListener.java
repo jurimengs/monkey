@@ -27,6 +27,14 @@ public class NodeEventListener<T> implements EventListener<T> {
      * @param persistFirstTimeAfter timer will execute after ${persistFirstTimeAfter} seconds
      * @param persistFrequency timer execute per ${persistFrequency} times 
      */
+    public NodeEventListener() {
+        this.run();
+    }
+    
+    /**
+     * @param persistFirstTimeAfter timer will execute after ${persistFirstTimeAfter} seconds
+     * @param persistFrequency timer execute per ${persistFrequency} times 
+     */
     public NodeEventListener(int persistFirstTimeAfter, int persistFrequency, Executor<T> executor) {
         this.persistFirstTimeAfter = persistFirstTimeAfter;
         this.persistFrequency = persistFrequency;
