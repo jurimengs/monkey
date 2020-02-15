@@ -17,6 +17,7 @@
 
     <properties>
     
+        <monkey.version>0.0.1</monkey.version>
         <activemq.version>5.15.8</activemq.version>
         <antlr2.version>2.7.7</antlr2.version>
         <appengine-sdk.version>1.9.71</appengine-sdk.version>
@@ -408,6 +409,12 @@
                 <version>${logback.version}</version>
             </dependency>
             <!-- log end -->
+            
+            <dependency>
+                <groupId>com.memory</groupId>
+                <artifactId>monkey-db</artifactId>
+                <version>${monkey.version}</version>
+            </dependency>
 
         </dependencies>
 
@@ -456,5 +463,7 @@
 
     <modules>
         <module>monkey-db</module>
+        <module>monkey-metrics</module>
+        <module>monkey-server</module>
     </modules>
 </project>

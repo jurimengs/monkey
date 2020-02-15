@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<sqlMap namespace="OrganPlatformRef">
+	<sql id="findEntityByOrganId" isRead="true">
+		<![CDATA[
+			SELECT
+				*
+			FROM
+				t_organ_platform_ref
+			WHERE
+				organ_id = :organId
+			AND company_id = :companyId
+			<#if platformType?? && platformType?length gt 0>
+				AND platform_type = :platformType
+			</#if>
+			<#if lim?? && lim?length gt 0>
+				limit :lim
+			</#if>
+        ]]>
+	</sql>
+	<sql id="findEntityByPlatfromIdAndPlatformType" isRead="true">
+		 <![CDATA[
+			SELECT
+				*
+			FROM
+				t_organ_platform_ref
+			WHERE
+				platform_type = :platformType
+			AND platform_id = :platformId
+			AND company_id = :companyId
+        ]]>
+	</sql>
+
+	<sql id="findOrganNotinPlatform" isRead="true">
+		<![CDATA[
+			SELECT
+				*
+			FROM
+				t_organ o
+			WHERE
+				company_id = :companyId
+			AND o.`status` = 0
+			and o.pid != '-1'
+			AND NOT EXISTS (
+				SELECT
+					1
+				FROM
+					t_organ_platform_ref r
+				WHERE
+					r.company_id = :companyId
+				AND o.id = r.organ_id
+			)
+			order by o.level
+		]]>
+	</sql>
+</sqlMap>

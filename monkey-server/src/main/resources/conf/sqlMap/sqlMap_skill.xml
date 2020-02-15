@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<sqlMap namespace="Skill">
+    <!-- 通过email查找用户 -->
+    <sql id="checkSkillNameRepeat" isRead="true">
+        <![CDATA[
+       SELECT
+			COUNT(*)
+		FROM
+			t_skill
+		WHERE
+			company_id = :companyId
+		AND skill_name = :skillName
+		AND `status` = '0'
+		<#if id??  && id?length gt 0>
+		and id != :id
+       	</#if>
+        ]]>
+    </sql>
+     <sql id="checkSkillLevelNameRepeat" isRead="true">
+        <![CDATA[
+       SELECT
+			COUNT(*)
+		FROM
+			t_skill_level
+		WHERE
+			company_id = :companyId
+		AND skill_level_name = :skillLevelName
+		AND `status` = '0'
+		<#if id??  && id?length gt 0>
+		and id != :id
+       	</#if>
+        ]]>
+    </sql>
+    <sql id="checkSkillLevelNameRepeat" isRead="true">
+        <![CDATA[
+       SELECT
+			COUNT(*)
+		FROM
+			t_skill_level
+		WHERE
+			company_id = :companyId
+		AND skill_level_name = :skillLevelName
+		AND `status` = '0'
+		<#if id??  && id?length gt 0>
+		and id != :id
+       	</#if>
+        ]]>
+    </sql>
+    <sql id="checkSkillLevelRepeat" isRead="true">
+        <![CDATA[
+      	SELECT
+			COUNT(*)
+		FROM
+			t_skill_level
+		WHERE
+			company_id = :companyId
+		AND skill_level = :skillLevel
+		AND `status` = '0'
+		<#if id??  && id?length gt 0>
+		and id != :id
+       	</#if>
+        ]]>
+    </sql>
+    <sql id="getMaxSkillCode" isRead="true">
+        <![CDATA[
+		SELECT
+			MAX(
+				CAST(skill_code AS SIGNED)
+			) skillCode
+		FROM
+			t_skill
+		WHERE
+			company_id = :companyId
+			]]>
+    </sql>
+    <sql id="getSkillList" isRead="true">
+        <![CDATA[
+		SELECT
+			id,
+			skill_name skillName,
+			skill_code skillCode
+		FROM
+			t_skill
+		WHERE
+			company_id = :companyId
+		AND `status` = '0'
+		<#if skillName??  && skillName?length gt 0>
+		AND skill_name LIKE CONCAT('%', :skillName, '%')
+		</#if>
+		order by skill_code
+			]]>
+    </sql>
+    <sql id="getSkillLevelList" isRead="true">
+        <![CDATA[
+		SELECT
+			id,
+			skill_level_name skillLevelName,
+			skill_level skillLevel
+		FROM
+			t_skill_level
+		WHERE
+			company_id = :companyId
+		AND `status` = '0'
+		<#if skillLevelName??  && skillLevelName?length gt 0>
+		AND skill_level_name LIKE CONCAT('%', :skillLevelName, '%')
+		</#if>
+		order by skill_level
+			]]>
+    </sql>
+</sqlMap>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<configuration>
+
+	<!--在没有定义${LOG_HOME}系统变量的时候，可以设置此本地变量。提交测试、上线时，要将其注释掉，使用系统变量。 -->
+	<!-- 本地环境 -->
+	<!-- 内测环境 q <property name="LOG_HOME" value="/opt/logs" /> -->
+	<!-- SIT环境 <property name="LOG_HOME" value="/home/application/webapps/logs" 
+		/> -->
+	<include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+
+	<!-- You can override this to have a custom pattern -->
+	<property name="CONSOLE_LOG_PATTERN"
+			  value="%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
+
+
+	<property name="LOG_HOME" value="D:/logs/home/programs" />
+	<!-- 应用名称 -->
+	<property name="APP_NAME" value="ums" />
+	<!--日志文件保留天数 -->
+	<property name="LOG_MAX_HISTORY" value="30" />
+	<!--应用日志文件保存路径 -->
+	<property name="LOG_APP_HOME" value="${LOG_HOME}/${APP_NAME}/app" />
+	<!--系统日志文件保存路径 -->
+	<property name="LOG_SYS_HOME" value="${LOG_HOME}/${APP_NAME}/sys" />
+
+	<!-- 控制台输出日志 -->
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<!-- Minimum logging level to be presented in the console logs-->
+			<level>INFO</level>
+		</filter>
+		<encoder>
+			<pattern>${CONSOLE_LOG_PATTERN}</pattern>
+<!--			<pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%X{X-B3-TraceId}] [%X{X-B3-SpanId}] [%thread] %-5level %logger.%M:%line %msg%n</pattern>-->
+			<charset>utf8</charset>
+		</encoder>
+	</appender>
+
+	<!-- applcation的文件输出日志 (按照每天生成日志文件 )，对applcation文件日志的文件名需要根据具体的applcation来配置 -->
+	<appender name="APP"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<!--日志文件输出的文件名 -->
+			<FileNamePattern>${LOG_APP_HOME}/project.log.%d{yyyy-MM-dd}
+			</FileNamePattern>
+			<!--日志文件保留天数 -->
+			<MaxHistory>${LOG_MAX_HISTORY}</MaxHistory>
+		</rollingPolicy>
+		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+			<!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度%msg：日志消息，%n是换行符 -->
+			<pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%X{X-B3-TraceId}] [%X{X-B3-SpanId}] [%thread] %-5level %logger.%M:%line %msg%n</pattern>
+		</encoder>
+	</appender>
+
+	<!--============================ 按照每天生成日志文件：VENUS系统日志：默认配置 ========================== -->
+
+	<!--=============================== 日志输出: 默认主业务日志 ====================================== -->
+	<root level="debug">
+		<appender-ref ref="APP" />
+		<appender-ref ref="STDOUT" />
+	</root>
+
+
+</configuration>

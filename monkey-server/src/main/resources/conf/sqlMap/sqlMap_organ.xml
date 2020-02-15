@@ -1,0 +1,710 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<sqlMap namespace="Organ">
+		<!-- 组织机构列表页查询 -->
+  <sql id="getOrganListPage" isRead="true">
+	<![CDATA[
+		SELECT
+			o.id,
+			o.organ_name organName,
+			o.organ_type organType,
+			o.code_num codeNum,
+			o.level,
+      		o.pid,
+			o.description,
+			u1.user_name userName,
+			ifnull(o.member,0) thisOrganMember,
+			o.legal_representative legalRepresentative,
+			o.telephone,
+			o.address,
+			o2.organ_name pOrganName,
+			ifnull(o.update_date,o.create_date) updateDate,
+			u2.user_name updateUserName,
+			s.business_area businessArea,
+			s.table_num tableNum,
+			s.business_time businessTime
+		<#if selfFields??  && selfFields?size gt 0>
+			,
+            	<#list selfFields as selfField>
+           		 	ext.${selfField}
+           		 	<#if selfField_has_next>,</#if>
+        		</#list>
+       		</#if>
+		FROM
+			t_organ o
+		LEFT JOIN t_organ o2 on o.pid = o2.id AND o.`status` = 0
+		LEFT JOIN t_organ_store s ON o.id = s.organ_id
+		LEFT JOIN wec_user u1 on u1.id = o.charge_user_id and  u1.status not in ('3','5')
+		LEFT JOIN wec_user u2 on u2.id = o.update_uid and  u2.status not in ('3','5')
+		LEFT JOIN t_ext_t_organ ext on ext.id = o.id
+		WHERE
+			o.company_id = :companyId
+		AND o.`status` = 0
+		<#if filterStr??  && filterStr?length gt 0>
+			and o.organ_name like concat ('%',:filterStr,'%')
+		</#if>
+		<#if organPaths?? && organPaths?length gt 0>
+			AND o.organ_paths like CONCAT (:organPaths,'%')
+		</#if>
+		<#if dataRange??  && dataRange?length gt 0>
+           	${dataRange}
+       	</#if>
+		<#if functions??  && functions?size gt 0>
+				and (
+            	<#list functions as thisfunc>
+            		<#if thisfunc??  && thisfunc?size gt 0>
+	           		 	(
+	           		 	<#list thisfunc as selffunc>
+	           		 			${selffunc.sqlStr}  
+	           		 			 	<#if selffunc.funcType??  && selffunc.funcType?length gt 0> 
+	           		 			 		<#if selffunc.funcType = 0>
+	           		 			 			<
+	           		 			 		</#if> 
+	           		 			 		<#if selffunc.funcType = 1>
+	           		 			 			=
+	           		 			 		</#if> 
+	           		 			 		<#if selffunc.funcType = 2>
+	           		 			 			>
+	           		 			 		</#if> 
+	           		 			 	<#else>
+	           		 			 	 like
+									</#if>  
+	           		 			'${selffunc.funcValue}'
+	           		 		<#if selffunc_has_next> and</#if>
+	           		 	</#list>	           		 		           	       
+           		 		)
+           		 		<#if thisfunc_has_next> or </#if>
+           		 	</#if>          		 	
+        		</#list>
+        		)
+       		</#if>
+       		ORDER BY o.level, o2.sort,o.sort,o.update_date desc
+		]]>	
+	</sql>
+		<!-- 获取组织机构部门 -->
+	<sql id="getDeptByOrganId" isRead="true">
+		<![CDATA[
+			SELECT 
+				o.id,
+				o.pid,
+				o.organ_name
+			FROM
+				t_organ o
+			WHERE
+				o.company_id = :companyId and o.`status` = 0 
+			<#if filterStr??  && filterStr?length gt 0>
+			and o.organ_name like concat ('%',:filterStr,'%')
+			</#if>
+			<#if organIds?? && organIds?size gt 0>
+				and o.id in (:organIds)	
+			</#if>
+			ORDER BY o.sort
+		]]>	
+	</sql>
+		<!-- 组织机构列表查询 -->
+	<sql id="getOrganList" isRead="true">
+		<![CDATA[
+			select id,organ_name organName,organ_type organType,pid,member,status from t_organ
+			where company_id = :companyId and status !=5
+			<#if filterStr??  && filterStr?length gt 0>
+				and `organ_name` like CONCAT('%',:filterStr,'%')
+			</#if>
+			<#if status??  && status?length gt 0>
+				and `status` = 0
+			</#if>
+			<#if dataRange??  && dataRange?length gt 0>
+           		${dataRange}
+       		</#if>
+			order by level,sort
+		]]>	
+	</sql>
+	<!-- 组织机构列表查询 从主库查这个慎用，只在有同步要求非常高的时候才用！！！！！！千万记住 -->
+	<sql id="getOrganListFromMasterDB">
+        <![CDATA[
+            select id,organ_name organName,organ_type organType,pid,member,status,IFNULL(level,20)  as lev from t_organ
+            where company_id = :companyId and status !=5
+            <#if filterStr??  && filterStr?length gt 0>
+                and `organ_name` like CONCAT('%',:filterStr,'%')
+            </#if>
+            <#if status??  && status?length gt 0>
+                and `status` = 0
+            </#if>
+            <#if dataRange??  && dataRange?length gt 0>
+                ${dataRange}
+            </#if>
+            order by lev ,sort
+        ]]> 
+    </sql>
+	
+	<sql id="getOrganMap" isRead="true">
+		<![CDATA[
+		SELECT
+		o.id id,
+		o.organ_name organName,
+		o.tab_color tabColor,
+		o.pid pid
+		FROM
+		t_organ o
+		WHERE
+		o.company_id = :companyId
+		AND `status` = 0
+		ORDER BY o.level,o.sort asc
+		]]>
+	</sql>
+	
+	<sql id="getNoCodeOrgan">
+		<![CDATA[
+		SELECT
+		id,pid
+		FROM
+		t_organ 
+		WHERE
+		company_id = :companyId
+		and code_num is null
+		ORDER BY level,sort
+		]]>
+	</sql>
+
+	<!-- 查询组织的子公司Id -->
+	<sql id="getAllSubCompanyIds" isRead="true">
+		<![CDATA[
+			select DISTINCT subcompany_id from t_organ where company_id = :companyId and `status` !=5
+		<#if level??  && level?length gt 0>
+			and level = -1
+		</#if>
+		]]>
+	</sql>
+			<!-- 查询组织机构当前的子集 -->
+	<sql id="getThisChilds" isRead="true">
+		<![CDATA[
+		select id,pid,organ_name,organ_type,status,company_id,subcompany_id,organ_paths,member,tab_color,sort from t_organ 
+		where pid = :organId and status != 5
+		<#if status??  && status?length gt 0>
+		and `status` = :status
+		</#if>
+		order by level,sort
+		]]>
+	</sql>
+	
+		<!-- 查询组织机构所有的子集 -->
+	<sql id="getAllChilds" isRead="true">
+		<![CDATA[
+		select 
+			o.id,o.pid,o.organ_name organName,o.organ_type organType,o.status,o.company_id companyId,
+			o.subcompany_id subcompanyId,o.organ_paths organPaths,o.member,o.tab_color tabColor,os.business_area businessArea
+		from 
+			t_organ o
+		left join t_organ_store os on o.id=os.organ_id
+		where 
+			o.company_id=:companyId   and status !=5 
+		<#if organId??  && organId?length gt 0>
+			and o.organ_paths like CONCAT('%',:organId,'%') 
+		</#if>
+		<#if status??  && status?length gt 0>
+		and `o.status` = :status
+		</#if>
+		order by o.level,o.sort
+		]]>
+	</sql>
+	
+		<!-- 查询组织机构所有子集Id -->
+	<sql id="getAllChildsIds" isRead="true">
+		<![CDATA[
+		select id from t_organ 
+		where company_id=:companyId and status !=5 
+		<#if organId??  && organId?length gt 0>
+		and organ_paths like CONCAT('%',:organId,'%') 
+		</#if>
+		<#if status??  && status?length gt 0>
+		and `status` = :status
+		</#if>
+		]]>
+	</sql>
+	
+	<!-- 判断组织是否只有一个集团 -->
+	<sql id="isHavingSubOrgan" isRead="true">
+			select id from t_organ where company_id = :companyId
+			and pid != -1 and `status` != 5 limit 1
+	</sql>
+	
+		<!-- 在自动生成模式下查询编码最大值 -->
+	<sql id="getMaxCodeNumByPid">
+		select code_num AS codeNum from t_organ where pid = :pid  order by codeNum desc limit 1
+	</sql>
+	
+	<!-- 根据组织机构唯一码查询组织机构 -->
+	<sql id="getOrganByCompanyOrganCode" isRead="true">
+		select id from t_organ where company_organ_code = :companyOrganCode
+	</sql>
+	
+	<!-- 获取排序值最大值 -->
+	<sql id="getMaxSortByPid" isRead="true">
+		select max(sort) sort from t_organ where pid = :pid
+	</sql>
+	
+	<!-- 通过组织名来查询数量，判断是否有重名组织机构 -->
+		<sql id="findOrganByNameAndPid" isRead="true">
+			select id from t_organ where company_id = :companyId and pid = :pid and binary organ_name = :organName and status!=5 limit 1
+		</sql>
+		
+	<!-- 查询组织详情 -->
+	<sql id="getOrganInfoById" isRead="true">
+		SELECT
+			o.id,
+			o.organ_name organName,getOrganInfoById
+			o.organ_type organType,
+			o.salary_level salaryLevel,
+			o.code_num codeNum,
+			o.pid,
+			p.organ_name pOrganName,
+			u.id userId,
+			u.user_name userName,
+			g.id gangweiId,
+			g.gangwei_name gangweiName,
+			o.member,
+			o.telephone,
+			o.latitude,
+			o.longitude,
+			o.address,
+			o.`city_id` cityId,
+			o.`province_id` provinceId,
+			o.`district_id` districtId,
+			o.description,
+			o.businesslicense_pic_addr picAddr,
+			s.business_area area,
+			s.table_num tableNum,
+			s.business_time businessTime,
+			o.gongzi_cost_center gongziCostCenterId,
+			o.geshui_cost_center geshuiCostCenterId,
+		FROM
+			t_organ o
+		LEFT JOIN t_organ p ON p.id = o.pid
+		LEFT JOIN t_organ_store s on s.organ_id = o.id
+		LEFT JOIN t_gangwei g on g.id = o.charge_gangwei_id and g.status = 0
+		LEFT JOIN wec_user u ON u.id = o.charge_user_id and u.status not in ('3','5') and u.user_status not in ('40','50')
+		WHERE
+			o.id = :id
+			limit 1
+	</sql>
+	
+	<!-- 根据组织机构Id查询门店信息Id -->
+	<sql id="findOrganStoreIdByOrganId" isRead="true">
+		<![CDATA[
+		select id from t_organ_store where organ_id = :organId limit 1
+		]]>	
+	</sql>
+	
+	<!-- 根据组织机构Id查询门店信息Id -->
+	<sql id="getChildOrganIds" isRead="true">
+		<![CDATA[
+		SELECT
+			id
+		FROM
+			t_organ
+		WHERE
+			organ_paths LIKE CONCAT(:path, '%')
+		AND `status` = 0
+		]]>	
+	</sql>
+	
+		<!-- 根据组织ids计算在职人数-->
+	<sql id="countAllUserByOrganIds" isRead="true">
+		<![CDATA[
+		SELECT COUNT(1) FROM WEC_USER WHERE company_id = :companyId and  status not in ('3','5')
+		<#if isDel??>
+		 AND user_status not IN ('40', '50')
+		</#if>
+		<#if organIds?? && organIds?size gt 0>
+		AND organ_id IN  (:organIds)
+		</#if>
+		]]>	
+	</sql>
+	
+	<sql id="getOrganIdByLayer" isRead="true">
+		<![CDATA[
+		SELECT
+			id
+		FROM
+			t_organ
+		WHERE
+			company_id = :companyId
+		AND `status` = 0
+		AND `level` = :layer
+		]]>	
+	</sql>
+	
+	<!-- 根据组织ids查询岗位ids-->
+	<sql id="getAllGangweiIdByOrganIds" isRead="true">
+		<![CDATA[
+		SELECT id FROM T_GANGWEI WHERE COMPANY_ID = :companyId  and status !=5
+		<#if organIds?? && organIds?size gt 0>
+		AND ORGAN_ID IN  (:organIds)
+		</#if>
+		<#if status??  && status?length gt 0>
+		and `status` = :status
+		</#if>
+		]]>	
+	</sql>
+	
+		<!-- 根据组织ids统计岗位数-->
+	<sql id="getGangweiCountByOrganIds" isRead="true">
+		<![CDATA[
+		SELECT count(1) FROM T_GANGWEI WHERE COMPANY_ID = :companyId  and status !=5
+		<#if organIds?? && organIds?size gt 0>
+			AND ORGAN_ID IN  (:organIds)
+		</#if>
+		<#if status??  && status?length gt 0>
+			and `status` = :status
+		</#if>
+		]]>	
+	</sql>
+	
+		<!-- 根据组织机构id查询所有人员和岗位编制信息-->
+	<sql id="getAllPosMemberAndUserNumByOrganId" isRead="true">
+		<![CDATA[
+		SELECT
+			o.id,
+			o.pid,
+			o.member oMember,
+			o.organ_paths organPaths,
+			(
+				SELECT
+					ifnull(sum(g.member), 0)
+				FROM
+					t_gangwei g
+				WHERE
+					g.organ_id = o.id
+				AND g.`status` = 0
+			) gMember,
+			(
+				SELECT
+					ifnull(COUNT(1), 0)
+				FROM
+					wec_user u
+				WHERE
+					u.organ_id = o.id
+				AND u.STATUS not in ('3','5')
+				AND u.user_status not IN ('40', '50')
+			) count
+		FROM
+			t_organ o
+		where o.company_id = :companyId  and o.status !=5
+		<#if organIds?? && organIds?size gt 0>
+			AND o.id in (:organIds)
+		</#if>
+		<#if status??  && status?length gt 0>
+			and  o.status = :status
+		</#if>
+		]]>	
+	</sql>
+	
+	<!-- 根据组织机构id查询所有人员和岗位编制信息-->
+	<sql id="getOrganMemberPosMemberAndUserNum" isRead="true">
+		<![CDATA[
+		SELECT
+			o.id,
+			ifnull(o.member,0) oMember,
+			(
+				SELECT
+					ifnull(sum(g.member), 0)
+				FROM
+					t_gangwei g
+				WHERE
+					g.organ_id = o.id
+				AND g.`status` = 0
+			) gMember,
+			(
+				SELECT
+					ifnull(COUNT(1), 0)
+				FROM
+					wec_user u
+				WHERE
+					u.organ_id = o.id
+				AND u.STATUS not in ('3','5')
+				AND u.user_status not IN ('40', '50')
+			) count
+		FROM
+			t_organ o
+		where o.company_id = :companyId  and o.status !=5
+		<#if organIds?? && organIds?size gt 0>
+			AND o.id IN  (:organIds)
+		</#if>
+		<#if status??  && status?length gt 0>
+			and  o.status = :status
+		</#if>
+		]]>	
+	</sql>
+	
+				<!-- 删除组织机构自定义字段信息 -->
+	<sql id="removeExtOrganByIds" >
+		delete from  t_ext_t_organ  where id in (:organIds)
+	</sql>
+	
+	<!-- 删除门店信息 -->
+	<sql id="removeOrganStoreByIds" >
+		delete from  t_organ_store  where organ_id in (:organIds)
+	</sql>
+	
+			<!-- 逻辑删除组织机构 -->
+	<sql id="removeOrganByIds" >
+		update t_organ set status = 5 where id in (:organIds)
+	</sql>
+	
+			<!-- 停用组织机构 -->
+	<sql id="stopOrganByOrganIds">
+		update t_organ set status = 2,disabled_date = now() where id in (:organIds)
+	</sql>
+	
+				<!-- 启用组织机构 -->
+	<sql id="restartOrganByOrganIds">
+		update t_organ set status = 0,disabled_date = null where id in (:organIds)
+	</sql>
+	
+		<!-- 自定义编辑组织 -->
+	<sql id="editOrganSelf"> 
+		<![CDATA[
+			update t_organ 
+			LEFT JOIN t_ext_t_organ 
+			on t_ext_t_organ.id = t_organ.id
+			set
+			<#if fields??  && fields?size gt 0>
+	            <#list fields as selfField>
+	           		${selfField.tableName}.${selfField.filed}  =  ${selfField.value}
+	           		 	<#if selfField_has_next>,</#if>
+	        		</#list>
+	       		</#if> 
+			where t_organ.id = :organId 
+		]]>
+	</sql>
+
+	<sql id="getExtOrganIdByOrganId" isRead="true">
+		SELECT
+			*
+		FROM
+			`t_organ_platform_ref`
+		WHERE
+			organ_id = :organId
+		AND platform_type = :platformType
+	</sql>
+	
+		<sql id="getAllForBak" isRead="true">
+			SELECT
+				o.id id,
+				o.company_id companyId,
+				o.subcompany_id subcompanyId,
+				o.organ_name organName,
+				o.organ_type organType,
+				o.pid,
+				o.`level`,
+				o.sort,
+				o.organ_paths organPaths,
+				o.code_num codeNum,
+				o.`status`,
+				o.member,
+				o.tab_color tabColor,
+				o.company_organ_code companyOrganCode,
+				o.short_name shortName,
+				o.charge_user_id chargeUserId,
+				o.telephone,
+				o.address,
+				o.description,
+				o.province_id provinceId,
+				o.city_id cityId,
+				o.district_id districtId,
+				o.country_id countryId,
+				o.latitude,
+				o.longitude,
+				o.isalonesalary,
+				o.businesslicense_num businesslicenseNum,
+				o.businesslicense_pic_addr businesslicensePicAddr,
+				o.legal_representative legalRepresentative,
+				o.update_date updateDate,
+				o.update_uid updateUid,
+				o.disabled_date disabledDate,
+				now() saveDate
+			FROM
+				t_organ o
+			LEFT JOIN t_company c ON o.company_id = c.id
+			WHERE
+				c.`status` != 5
+			AND o.`status` != 5
+	</sql>
+	
+		<!-- 通过组织id查询第三方id -->
+	<sql id="getPlatformOrganId" isRead="true">
+		<![CDATA[
+			select platform_id from t_organ_platform_ref where company_id = :companyId and organ_id = :organId
+		]]>
+	</sql>
+	
+			<!-- 通过组织id查询第三方id -->
+	<sql id="getNearlyParentFirmId" isRead="true">
+		<![CDATA[
+			select * from t_organ where id in (:organIds) and organ_type = 10 order by level desc limit 1;
+		]]>
+	</sql>
+	<sql id="getRootNodeOrgan" isRead="true">
+		<![CDATA[
+			select * from t_organ where pid = :pid and company_id = :companyId
+		]]>
+	</sql>
+	<sql id="getIdAndNameList" isRead="true">
+		<![CDATA[
+			SELECT
+				t.id,
+				t.organ_name 'name'
+			FROM
+				t_organ t
+			WHERE
+				t.company_id =:companyId
+			AND t.id IN (:organIds)
+		]]>
+	</sql>
+	<sql id="getOrganArea" isRead="true">
+		<![CDATA[
+			SELECT
+				*
+			FROM
+				t_organ_store 
+			WHERE
+				company_id =:companyId
+			AND organ_id IN (:organIds)
+		]]>
+	</sql>
+	
+	<sql id="getOrganImport" isRead="true">
+		<![CDATA[
+			SELECT
+				o.id organId,o.organ_name organName,t.business_area businessArea
+			FROM
+				t_organ o 
+			LEFT JOIN t_organ_store t ON o.id=t.organ_id
+			WHERE
+				o.company_id =:companyId
+			AND o.id IN (:organIds)
+		]]>
+	</sql>
+
+    <sql id="getOrganMemberInfo" isRead="true">
+        <![CDATA[
+        SELECT
+        t.id,
+        t.organ_id organId,
+        tor.organ_name organName,
+        t.add_member addMember,
+        t.reason reason,
+        t.origin_member member,
+        t.process_id processId
+        FROM
+        t_organ_member t
+        LEFT JOIN t_organ tor ON t.organ_id = tor.id
+        where t.id=:id
+        ]]>
+    </sql>
+
+    <sql id="listQueryByOrganIds" isRead="true">
+        <![CDATA[
+       		select *from t_organ t where t.id in(:ids)
+        ]]>
+    </sql>
+
+    <!-- 查询所有子组织结构 -->
+    <sql id="getAllChildEntity" isRead="true">
+        <![CDATA[
+        select * from t_organ
+        where company_id=:companyId and status !=5
+		<#if organId??  && organId?length gt 0>
+		and organ_paths like CONCAT('%',:organId,'%')
+		</#if>
+		<#if status??  && status?length gt 0>
+		and `status` = :status
+		</#if>
+        ]]>
+    </sql>
+
+<sql id="batchInsertOrgan">
+        <![CDATA[
+           INSERT INTO `t_organ`(`id`, `company_id`, `organ_name`, `organ_type`, `sort`, `status`, `create_date`, `create_uid` )
+            VALUES
+            <#if organList?? && organList?size gt 0>
+                <#list organList as field>
+                    ('${field.id}','${field.companyId}','${field.organName}','${field.organType}',${field.sort},0,SYSDATE(),'sys')
+                    <#if field_has_next>,</#if>
+                </#list>
+            </#if>
+        ]]>
+    </sql>
+    <sql id="batchInsertOrganRef">
+        <![CDATA[
+           INSERT INTO `t_organ_platform_ref`(`id`,`company_id`,`platform_organ_pid`,`organ_id`,`platform_type`,`platform_id`,`create_date`)
+            VALUES
+            <#if organRefList?? && organRefList?size gt 0>
+                <#list organRefList as field>
+                    (UUID32(),'${field.companyId}','${field.platformOrganPid}','${field.organId}',${field.platformType},${field.platformId},SYSDATE())
+                    <#if field_has_next>,</#if>
+                </#list>
+            </#if>
+        ]]>
+    </sql>
+    <sql id="batchUpdateOrganPid">
+        <![CDATA[
+            <#list organList as field>
+                update t_organ set pid='${field.pid}' where id='${field.id}'
+                <#if field_has_next>;</#if>
+            </#list>
+        ]]>
+    </sql>
+    <sql id="batchUpdateOrganPath">
+        <![CDATA[
+            <#list organList as field>
+                update t_organ set organ_paths='${field.organPaths}',`level`='${field.level}' where id='${field.id}'
+                <#if field_has_next>;</#if>
+            </#list>
+        ]]>
+    </sql>
+    <sql id="batchUpdateOrganCode">
+        <![CDATA[
+            <#list organList as field>
+                update t_organ set code_num='${field.codeNum}',`company_organ_code`='${field.companyOrganCode}' where id='${field.id}'
+                <#if field_has_next>;</#if>
+            </#list>
+        ]]>
+    </sql>
+    <sql id="findDataFromMasterDB">
+        <![CDATA[
+               select * from t_organ where id=:organId
+        ]]>
+    </sql>
+
+    <!-- 查询组织中使用了工资成本中心的组织个数 -->
+    <sql id="getGzCostOrganCount">
+        <![CDATA[
+        SELECT
+        COUNT(1)
+        FROM
+        t_organ t
+        WHERE t.`company_id` =:companyId
+        and t.status!=5
+        AND t.`gongzi_cost_center` IN (:gzConstIds)
+        ]]>
+    </sql>
+    <!-- 查询组织中使用了个税成本中心的组织个数 -->
+    <sql id="getGsCostOrganCount">
+        <![CDATA[
+        SELECT
+        COUNT(1)
+        FROM
+        t_organ t
+        WHERE t.`company_id` =:companyId
+        and t.status!=5
+        AND t.`geshui_cost_center` IN (:gsConstIds)
+        ]]>
+     </sql>
+
+    <sql id="getChildsByPids" isRead="true">
+        <![CDATA[
+        select * from t_organ where pid in (:pids) and company_id = :companyId
+        ]]>
+    </sql>
+
+
+</sqlMap>
