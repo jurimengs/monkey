@@ -4,7 +4,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication(
-        scanBasePackages = {"com.monkey.server"}
+        scanBasePackages = {"com.monkey.server", "org.monkey.db"}
         )
 public class MonkeyServerApplication {
 
