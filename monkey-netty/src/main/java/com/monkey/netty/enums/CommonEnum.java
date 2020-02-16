@@ -1,4 +1,4 @@
-package com.monkey.netty.client;
+package com.monkey.netty.enums;
 
 public interface CommonEnum {
     int getCode();

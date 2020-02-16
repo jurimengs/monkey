@@ -1,4 +1,4 @@
-package com.monkey.netty.client;
+package com.monkey.netty.enums;
 
 import com.alibaba.fastjson.JSONObject;
 
