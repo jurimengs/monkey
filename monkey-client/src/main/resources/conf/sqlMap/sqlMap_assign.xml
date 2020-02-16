@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<sqlMap namespace="assign">
+    <sql id="findByIds" isRead="true">
+        <![CDATA[
+          SELECT * FROM t_assign WHERE id IN (:ids)
+        ]]>
+    </sql>
+    <sql id="getDeptItem" isRead="true">
+        <![CDATA[
+         	SELECT
+			id,
+			organ_name name
+            FROM
+                t_organ
+            WHERE
+                id IN (:ids)
+            AND `status` = '0'
+        ]]>
+    </sql>
+    <sql id="getGangweiItem" isRead="true">
+        <![CDATA[
+          	SELECT
+			id,
+			gangwei_name name
+            FROM
+                t_gangwei
+            WHERE
+                id IN (:ids)
+            AND `status` = '0'
+        ]]>
+    </sql>
+    <sql id="getZhiweiItem" isRead="true">
+        <![CDATA[
+          	SELECT
+                id,
+                zhiwei_name name
+            FROM
+                t_zhiwei
+            WHERE
+                id IN (:ids)
+            AND `status` = '0'
+        ]]>
+    </sql>
+    <sql id="getUserItem" isRead="true">
+        <![CDATA[
+          	SELECT
+                id,
+                user_name name
+            FROM
+                wec_user
+            WHERE
+               id IN (:ids)
+            AND `status` = '0'
+            AND user_status IN ('10','20','30','60')
+        ]]>
+    </sql>
+    <sql id="getUserAssignInfo" isRead="true">
+        <![CDATA[
+          	SELECT
+                u.id userId,
+                u.gangwei_id gangweiId,
+                g.zhiwei_id zhiweiId,
+                g.organ_id organId
+            FROM
+                wec_user u
+            LEFT JOIN t_gangwei g ON u.gangwei_id = g.id
+            WHERE
+                u.id = :id
+        ]]>
+    </sql>
+</sqlMap>

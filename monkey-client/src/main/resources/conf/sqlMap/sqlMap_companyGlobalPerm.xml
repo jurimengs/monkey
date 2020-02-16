@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<sqlMap namespace="CompanyGlobalPerm">
+    
+   		<!-- 获取组织规则全局规则 -->
+		<sql id="getCompanyGlobalPerm" isRead="true">
+		<![CDATA[
+			select id,key_name keyName,value from t_company_global_perm where 
+			company_id = :companyId 
+			<#if keyName??  && keyName?length gt 0>
+			and key_name = :keyName limit 1
+			</#if>		
+			]]>
+		</sql>
+    
+</sqlMap>

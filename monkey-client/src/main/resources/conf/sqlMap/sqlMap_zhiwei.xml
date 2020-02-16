@@ -1,0 +1,634 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<sqlMap namespace="Zhiwei">
+
+	<sql id="getZhiweiAll" isRead="true">
+	<![CDATA[
+		SELECT
+			id,
+			zhiwei_name zhiweiName,
+			pid,
+			zhiwei_code zhiweiCode,
+			type,
+			layer,
+			company_id,
+			zhideng_lower zhidengLower,
+			zhideng_top zhidengTop,
+			zhiji_lower zhijiLower,
+			zhiji_top zhijiTop
+		FROM
+			t_zhiwei
+		WHERE
+			company_id = :companyId
+		AND `status` = 0
+		<#if key??  && key?length gt 0>
+		AND 
+			zhiwei_name LIKE CONCAT('%', :key, '%')
+		</#if>
+		ORDER BY
+			zhiwei_code
+			]]>
+	</sql>
+	
+	<sql id="getZhijiListByZhiweiId" isRead="true">
+		<![CDATA[
+			SELECT
+				z.id,
+				z.sort,
+				z.name
+			FROM
+				t_zhiwei_level z
+			WHERE
+				z.company_id = :companyId
+			AND z.status = 0
+			AND z.type = '1'
+			<#if zhijiTop??  && zhijiTop?length gt 0>
+				AND z.sort <= (
+				SELECT
+					z1.sort
+				FROM
+					t_zhiwei_level z1
+				WHERE
+					z1.id = :zhijiTop
+			)
+			</#if>
+			<#if zhijiLower??  && zhijiLower?length gt 0>
+			AND z.sort >= (
+				SELECT
+					z2.sort
+				FROM
+					t_zhiwei_level z2
+				WHERE
+					z2.id = :zhijiLower
+			)
+			</#if>
+			order by z.sort desc
+		]]>
+	</sql>
+	
+	
+	
+	<sql id="checkZhiweiTypeName" isRead="true">
+	<![CDATA[
+		SELECT
+			COUNT(*)
+		FROM
+			t_zhiwei
+		WHERE
+			pid = :pid
+		AND zhiwei_name = :zhiweiName
+		and `status` = 0
+			]]>
+	</sql>
+	<sql id="checkRemoveZhiweiType" isRead="true">
+	<![CDATA[
+		SELECT
+			COUNT(*)
+		FROM
+			t_zhiwei
+		WHERE
+			pid in (:zhiweiId)
+		AND type = 20
+		AND `status` = 0
+			]]>
+	</sql>
+	<sql id="checkRemoveZhiwei" isRead="true">
+	<![CDATA[
+		SELECT
+			COUNT(*)
+		FROM
+			t_gangwei
+		WHERE
+			zhiwei_id in (:zhiweiId)
+		AND `status` = 0
+			]]>
+	</sql>
+	
+	<sql id="getZhiweiTypeList" isRead="true">
+	<![CDATA[
+		SELECT
+			id,
+			zhiwei_name zhiweiName,
+			pid,
+			company_id
+		FROM
+			t_zhiwei
+		WHERE
+			company_id = :companyId
+		AND `status` = 0
+		AND type = 10
+			]]>
+	</sql>
+	<sql id="getZhiweiList" isRead="true">
+	<![CDATA[
+		SELECT
+			id,
+			zhiwei_name zhiweiName,
+			pid,
+			company_id
+		FROM
+			t_zhiwei
+		WHERE
+			company_id = :companyId
+		AND `status` = 0
+		AND type = 20
+			]]>
+	</sql>
+	
+	<sql id="getZhiweiIdByPid" isRead="true">
+	<![CDATA[
+		SELECT
+			id
+		FROM
+			t_zhiwei
+		WHERE
+			company_id = :companyId
+		AND pid = :pid
+		AND `status` = 0
+		AND type = 20
+			]]>
+	</sql>
+	
+	<sql id="getMaxZhiweiCode" isRead="true">
+	<![CDATA[
+		SELECT
+			MAX(CAST(zhiwei_code AS SIGNED)) zhiweiCode
+		FROM
+			t_zhiwei
+		WHERE
+			company_id = :companyId
+		AND pid = :pid
+			]]>
+	</sql>
+	
+	<sql id="getZhileiList" isRead="true">
+	<![CDATA[
+		SELECT
+			id,
+			zhiwei_name zhiweiName,
+			pid,
+			company_id companyId,
+			layer,
+			zhiwei_code zhiweiCode
+		FROM
+			t_zhiwei
+		WHERE
+			company_id = :companyId
+		AND `status` = 0
+		AND type = 10
+			]]>
+	</sql>
+	
+	<sql id="updateZhiweiLayerSet" >
+		<![CDATA[
+		UPDATE t_company_global_perm
+		SET value = :addLayer
+		WHERE
+			company_id = :companyId
+		AND key_name = 'zhiwei_layer_set'
+			]]>
+	</sql>
+	
+	<sql id="insertZhiweiLayerSet" >
+		<![CDATA[
+		INSERT INTO 
+		`t_company_global_perm`
+		(`key_name`, `value`, `company_id`)
+		VALUES
+		('zhiwei_layer_set', 0, :companyId);
+			]]>
+	</sql>
+	
+	<sql id="getCurrentZhiweiLayerCount" isRead="true">
+	<![CDATA[
+		SELECT
+			COUNT(*)
+		FROM 
+			t_zhiwei
+		WHERE
+			company_id = :companyId
+		AND	layer = :addLayer
+		AND `status` = 0
+		AND type = 10
+			]]>
+	</sql>
+	
+	<sql id="getZhileiListByLayer" isRead="true">
+	<![CDATA[
+		SELECT
+			id,
+			zhiwei_name zhiweiName,
+			layer,
+			company_id companyId
+		FROM
+			t_zhiwei
+		WHERE
+			company_id = :companyId
+		AND	layer = :addLayer	
+		AND `status` = 0
+		AND type = 10
+			]]>
+	</sql>
+	
+	<sql id="getZhiweiLayerSet" isRead="true">
+	<![CDATA[
+		SELECT
+			value
+		FROM
+			t_company_global_perm
+		WHERE
+			company_id = :companyId
+		AND	key_name = 'zhiwei_layer_set'
+			]]>
+	</sql>
+	
+	<sql id="updateZhiweiParentIdAndCompanyZhiweiCode">
+	<![CDATA[
+		UPDATE t_zhiwei
+		SET pid = NULL,
+		company_zhiwei_code = NULL
+		WHERE 
+		id IN (:idList)
+			]]>
+	</sql>
+	
+	<sql id="updateZhiweiParentId">
+	<![CDATA[
+		UPDATE t_zhiwei
+		SET pid = :pid
+		WHERE 
+		id IN (:idList)
+			]]>
+	</sql>
+	
+	<sql id="InZhiweiCusInfo">
+	<![CDATA[
+		INSERT INTO t_ext_t_zhiwei
+		(id
+		, company_id
+		<#if fieldList??  && fieldList?size gt 0>
+            <#list fieldList as field>
+            ,${field}
+        	</#list>
+        </#if>
+		)
+		VALUES
+		(:id
+		, :companyId
+		<#if valueList??  && valueList?size gt 0>
+            <#list valueList as value>
+            ,${value}
+        	</#list>
+        </#if>
+		)
+			]]>
+	</sql>
+	
+	<sql id="UpdateZhiweiCusInfo" isRead="true">
+	<![CDATA[
+		UPDATE t_ext_t_zhiwei
+		SET
+		id = :zhiweiId
+		<#if fieldList??  && fieldList?size gt 0>
+            <#list fieldList as field>
+            ,${field.field} = '${filed.value}'
+        	</#list>
+        </#if>
+		WHERE
+			id = :zhiweiId
+			]]>
+	</sql>
+	
+	<sql id="updateZhiweiPath" isRead="true">
+	<![CDATA[
+		UPDATE t_zhiwei
+		SET
+		zhiwei_path = :zhiweiPath
+		WHERE
+			pid = :pid
+		AND `status` = 0
+			]]>
+	</sql>
+	
+	<sql id="getZhiweiCodeByParentId" isRead="true">
+	<![CDATA[
+		SELECT
+			id,
+			zhiwei_code zhiweiCode
+		FROM
+			t_zhiwei
+		WHERE
+			pid = :pid
+		AND `status` = 0
+		AND type = '20'
+			]]>
+	</sql>
+	<sql id="getZhiweiNameListByZhileiId" isRead="true">
+	<![CDATA[
+		SELECT
+			id,
+			zhiwei_name zhiweiName
+		FROM
+			t_zhiwei
+		WHERE
+			pid = :zhileiId
+		AND `status` = 0
+		AND type = '20'
+		<#if key??  && key?length gt 0>
+		AND zhiwei_name LIKE CONCAT('%', :key, '%')
+		</#if>
+			]]>
+	</sql>
+	
+	<sql id="getZhiweiNameListByPid" isRead="true">
+	<![CDATA[
+		SELECT
+			id,
+			zhiwei_name zhiweiName
+		FROM
+			t_zhiwei
+		WHERE
+			pid = :zhileiId
+		AND `status` = 0
+		AND type = '20'
+		<#if key??  && key?length gt 0>
+		AND zhiwei_name LIKE CONCAT('%', :key, '%')
+		</#if>
+			]]>
+	</sql>
+	
+	<sql id="getZhiweiNameAll" isRead="true">
+	<![CDATA[
+		SELECT
+			id,
+			zhiwei_name zhiweiName,
+			pid,
+			type
+		FROM
+			t_zhiwei
+		WHERE
+			company_id = :companyId
+		AND `status` = 0
+		ORDER BY
+			zhiwei_code
+			]]>
+	</sql>
+	
+	<sql id="getZhiweiIds" isRead="true">
+	<![CDATA[
+		SELECT
+			id,
+			type,
+			layer
+		FROM
+			t_zhiwei
+		WHERE
+			pid = :pid
+		AND `status` = 0
+			]]>
+	</sql>
+	
+	<sql id="getZhiweiPage" isRead="true">
+	<![CDATA[
+			SELECT
+				p.id,
+				p.zhiwei_name zhiweiName,
+				p.pid,
+				p.zhiwei_code zhiweiCode,
+				p.type,
+				p.layer,
+				p.company_id companyId,
+				p.zhideng_lower zhidengLower,
+				p.zhideng_top zhidengTop,
+				p.zhiji_lower zhijiLower,
+				zlt.`name` zhijiTopName,
+				zll.`name` zhijiLowerName,
+				p.zhiji_top zhijiTop,
+				p.zhiwei_path zhiweiPath,
+				p.update_uid updateUserId,
+				u.user_name updateUserName,
+				p.update_date updateDate
+				<#if selfFields??  && selfFields?size gt 0>
+				,
+	            	<#list selfFields as selfField>
+	           		 	ext.${selfField}
+	           		 	<#if selfField_has_next>,</#if>
+	        		</#list>
+	       		</#if>
+			FROM
+				t_zhiwei p
+			LEFT JOIN t_ext_t_zhiwei ON t_ext_t_zhiwei.id = p.id
+			LEFT JOIN t_zhiwei_level zlt ON p.zhiji_top = zlt.id
+		    LEFT JOIN t_zhiwei_level zll ON p.zhiji_lower = zll.id
+		    LEFT JOIN wec_user u ON p.update_uid = u.id
+			WHERE
+				p.company_id = :companyId
+			AND	pid in (:zhileiList)
+			AND p.`status` = 0
+			AND p.type = 20
+			<#if key??  && key?length gt 0>
+				AND (
+					p.zhiwei_name LIKE CONCAT('%', :key, '%')
+				)
+			</#if>
+			
+			<#if functions??  && functions?size gt 0>
+				and (
+            	<#list functions as thisfunc>
+            		<#if thisfunc??  && thisfunc?size gt 0>
+	           		 	(
+	           		 	<#list thisfunc as selffunc>
+	           		 			${selffunc.sqlStr}  
+	           		 			 	<#if selffunc.funcType??  && selffunc.funcType?length gt 0> 
+	           		 			 		<#if selffunc.funcType = 0>
+	           		 			 			<
+	           		 			 		</#if> 
+	           		 			 		<#if selffunc.funcType = 1>
+	           		 			 			=
+	           		 			 		</#if> 
+	           		 			 		<#if selffunc.funcType = 2>
+	           		 			 			>
+	           		 			 		</#if> 
+	           		 			 	<#else>
+	           		 			 	 like
+									</#if>  
+	           		 			'${selffunc.funcValue}'
+	           		 		<#if selffunc_has_next> and</#if>
+	           		 	</#list>	           		 		           	       
+           		 		)
+           		 		<#if thisfunc_has_next> or </#if>
+           		 	</#if>          		 	
+        		</#list>
+        		)
+       		</#if>
+	       	ORDER BY p.zhiwei_code	
+			]]>
+	</sql>
+	
+	<sql id="getZhijiList" isRead="true">
+	<![CDATA[
+		SELECT 
+			id,
+			sort,
+			name
+		FROM
+			t_zhiwei_level
+		WHERE
+			company_id = :companyId
+		AND `status` = 0
+		AND type = 1
+		<#if name??  && name?length gt 0>
+		AND name LIKE CONCAT('%', :name, '%')
+		</#if>
+		ORDER BY sort
+			]]>
+	</sql>
+	
+	<sql id="getZhidengList" isRead="true">
+	<![CDATA[
+		SELECT 
+			id,
+			sort,
+			name
+		FROM
+			t_zhiwei_level
+		WHERE
+			company_id = :companyId
+		AND `status` = 0
+		AND type = 2
+		ORDER BY sort
+			]]>
+	</sql>
+	
+	<sql id="checkZhiweiLevelSort" isRead="true">
+	<![CDATA[
+		SELECT
+			count(1)
+		FROM
+			t_zhiwei_level
+		WHERE
+			`status` = 0
+		AND company_id = :companyId
+		AND type = :type
+		AND sort = :sort
+			]]>
+	</sql>
+	
+	<sql id="useZhiweiLevel" isRead="true">
+	<![CDATA[
+		SELECT
+			count(1)
+		FROM
+			wec_user
+		WHERE
+			zhiji = :zhiweiLevel
+			]]>
+	</sql>
+	
+	<sql id="checkZhiweiLevelName" isRead="true">
+	<![CDATA[
+		SELECT
+			count(1)
+		FROM
+			t_zhiwei_level
+		WHERE
+			`status` = 0
+		AND company_id = :companyId
+		AND type = :type
+		AND name = :name
+			]]>
+	</sql>
+
+	<sql id="getUserUpZhiwei" isRead="true">
+	<![CDATA[
+		select z.* from t_zhiwei z
+		LEFT JOIN t_gangwei g1 on g1.zhiwei_id = z.id
+		LEFT JOIN t_gangwei g2 on g2.pid = g1.id
+		where g1.company_id = :companyId and  g2.id = :gangweiId
+			]]>
+	</sql>
+	<sql id="getInitZhilei" isRead="true">
+	<![CDATA[
+		SELECT
+		COUNT(*)
+		FROM
+			t_zhiwei
+		WHERE
+			company_id = :companyId
+		AND `status` = '0'
+		AND pid != '-1'
+		AND type = '10'
+			]]>
+	</sql>
+	<sql id="getZhiweiIdByZhiweiName" isRead="true">
+	<![CDATA[
+		SELECT
+			id
+		FROM
+			t_zhiwei
+		WHERE
+			company_id = :companyId
+		AND `status` = '0'
+		AND type = '20'
+		AND zhiwei_name = :zhiweiName
+			]]>
+	</sql>
+	<sql id="getGenZhiweiId" isRead="true">
+	<![CDATA[
+		SELECT
+			id
+		FROM
+			t_zhiwei
+		WHERE
+			company_id = :companyId
+		AND `status` = '0'
+		AND pid = '-1'
+		AND type = '10'
+			]]>
+	</sql>
+	
+	<sql id="getZhiweiPathMap" isRead="true">
+	<![CDATA[
+		SELECT
+			id,
+			zhiwei_path zhiweiPath,
+			zhiwei_name zhiweiName
+		FROM
+			t_zhiwei
+		WHERE
+			company_id = :companyId
+		AND `status` = '0'
+		AND type = '20'
+		order by zhiwei_code
+			]]>
+	</sql>
+
+	<sql id="getZhiweiListByIds" isRead="true">
+		<![CDATA[
+		SELECT
+			id,
+			zhiwei_name
+		FROM
+			t_zhiwei
+		WHERE
+			id in (:zhiweiIds)
+			company_id = :companyId
+		AND `status` = '0'
+		order by zhiwei_code
+		]]>
+	</sql>
+	
+	<sql id="getZhiweiByIdList" isRead="true">
+		<![CDATA[
+		SELECT
+			id,
+			pid,
+			type,
+			zhiwei_name
+		FROM
+			t_zhiwei
+		WHERE
+		company_id = :companyId
+		and	id in (:zhiweiIdList)
+		]]>
+	</sql>
+</sqlMap>

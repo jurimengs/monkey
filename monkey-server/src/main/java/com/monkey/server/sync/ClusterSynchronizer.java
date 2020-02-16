@@ -2,7 +2,6 @@ package com.monkey.server.sync;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.monkey.db.core.ClusterProperties;
 import org.monkey.db.core.Operate;
 import org.monkey.db.core.listerers.EventListener;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;

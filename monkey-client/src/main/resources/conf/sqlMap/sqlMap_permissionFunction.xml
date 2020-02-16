@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<sqlMap namespace="PermissionFunction">
+    <!-- 2019-9-19 15:51  餐学网 1.3 权限，关于授权之后重新登录权限延迟的问题，现修改去主库查询 -->
+    <sql id="findEntityListByRoleId">
+        <![CDATA[
+			SELECT
+			 	DISTINCT
+				pf.id,
+				b.id as btnId,
+				b.menu_id AS menuId,
+				pf.company_id,
+				pf.function_id,
+				pf.function_type,
+				pf.auth_flag,
+				pf.create_date,
+				pf.create_uid,
+				pf.update_date,
+				pf.update_uid
+		    FROM wec_role_permission rp 
+			LEFT JOIN wec_permission_function pf on rp.permission_id = pf.id
+			LEFT JOIN t_button b ON pf.function_id = b.id AND pf.function_type = 2
+
+			where rp.company_id = :companyId and pf.id <> ''
+
+			<#if roleIdList?? && roleIdList?size gt 0>
+				AND rp.role_id in  (:roleIdList)
+			</#if>
+
+			<#if functionType?? && functionType?length gt 0>
+				AND pf.function_type = :functionType
+			</#if>
+		]]>
+    </sql>
+
+    <sql id="deletePermissionByIds">
+        <![CDATA[
+		delete from wec_permission_function
+			where company_id = :companyId
+			<#if ids?? && ids?size gt 0>
+				AND id in  (
+					<#list ids as id>
+						'${id}'
+						<#if id_has_next>,</#if>
+					</#list>
+				)
+			</#if>
+		]]>
+    </sql>
+
+    <sql id="findByUniqueKey">
+        <![CDATA[
+            SELECT * FROM wec_permission_function where company_id=:companyId 
+            and function_id = :functionId and function_type = :functionType
+        ]]>
+    </sql>
+
+</sqlMap>

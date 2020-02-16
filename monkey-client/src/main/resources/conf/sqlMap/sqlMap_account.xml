@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<sqlMap namespace="Account">
+	<sql id="findEntityByName" isRead="true">
+		<![CDATA[
+			SELECT *
+			from wec_account  a left join 
+			t_company c
+			on a.company_id=c.id
+			where login_id=:loginId and a.company_id = :companyId and a.status = 0 and c.`status`=0
+		]]>
+	</sql>
+	<sql id="findEntityByLoginId" isRead="true">
+        <![CDATA[
+            SELECT * from wec_account where login_id=:loginId and status = 0 limit 1
+        ]]>
+    </sql>
+	<sql id="findEntityByUserId" isRead="true">
+		<![CDATA[
+			SELECT *
+			from wec_account a left join t_company c
+			on a.company_id=c.id where a.user_id=:userId and a.status = 0 and c.`status`=0
+		]]>
+	</sql>
+    <sql id="findCompanyListByLoginId" isRead="true">
+        <![CDATA[
+            SELECT 
+                c.id as companyId, c.company_name as companyName, c.company_shortName as companyShortName,
+                u.id as userId, u.user_name as userName
+            from wec_account a 
+            left join t_company c on a.company_id = c.id
+            LEFT JOIN wec_user u ON a.user_id = u.id
+            where a.login_id = :loginId
+            and c.id <> '' 
+            and a.status = 0
+        ]]>
+    </sql>
+
+	<sql id="updateAccountStatus" isRead="false">
+		<![CDATA[
+		    update  wec_account  set status=:status  where  user_id=:userId
+		]]>
+	</sql>
+	<sql id="updateAccountPhone" isRead="false">
+		<![CDATA[
+		    update  wec_account  set login_id=:phone  where  user_id=:userId
+		]]>
+	</sql>
+</sqlMap>

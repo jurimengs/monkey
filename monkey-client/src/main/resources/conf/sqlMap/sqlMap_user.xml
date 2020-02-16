@@ -1,0 +1,3218 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<sqlMap namespace="User">
+
+    <sql id="findPaibanLeftList" isRead="true">
+        <![CDATA[
+            SELECT distinct u.id userId, u.user_name userName,u.emp_no empNo,u.entry_date ruzhiDate,u.user_status userStatus,
+            p.id gangweiId, p.gangwei_name gangweiName, z.id zhiweiId, z.zhiwei_name zhiweiName,
+            o.id organId, o.organ_name organName,  DATE_FORMAT(l.left_date,'%Y-%m-%d') lizhiDate
+            FROM `wec_user` u
+            left join t_gangwei p on p.id = u.gangwei_id
+            left join t_zhiwei z on z.id = p.zhiwei_id
+            left join t_organ o on o.id = u.organ_id
+            left join t_jiediao j on u.id = j.user_id
+            left join t_lizhi l on l.user_Id = u.id and l.is_last = 0 and (l.status = 60 or l.status = 70)
+
+            where u.company_id = :companyId
+            AND u.`status` != '3'
+            AND u.attend_status != '1'
+            AND u.entry_date <= :endDate
+            AND (l.left_date >= :startDate
+
+             OR l.left_date is null OR (u.entry_date BETWEEN :startDate AND :endDate)
+            		OR u.user_status != 40 )
+
+            <#if keyword?? && keyword?length gt 0>
+                AND (
+	                u.user_name like concat('%', :keyword, '%')
+	                OR u.emp_no = :keyword
+	                OR o.organ_name like concat('%', :keyword, '%')
+	                OR p.gangwei_name like concat('%', :keyword, '%')
+	                OR z.zhiwei_name like concat('%', :keyword, '%')
+	            )
+            </#if>
+            <#if organIds?? && organIds?size gt 0>
+                and (o.id in (:organIds)
+                	or (j.dept_to in (:organIds) and (:startDate <= over_date AND :endDate >= start_date) and j.type=1)
+                	)
+            </#if>
+            <#if notInUserIds?? && notInUserIds?size gt 0>
+                and u.id not in (:notInUserIds)
+            </#if>
+            <#if userIdList?? && userIdList?size gt 0>
+                and u.id in (:userIdList)
+            </#if>
+            <#if dataRange??  && dataRange?length gt 0>
+                ${dataRange}
+            </#if>
+            <#if workType??  && workType?length gt 0>
+                AND u.work_type = :workType
+            </#if>
+            <#if functions??  && functions?size gt 0>
+                AND (
+                <#list functions as thisfunc>
+                    <#if thisfunc??  && thisfunc?size gt 0>
+                        (
+                        <#list thisfunc as selffunc>
+                            ${selffunc.sqlStr}
+                            <#if selffunc.funcType??  && selffunc.funcType?length gt 0>
+                                <#if selffunc.funcType = 0>
+                                    <
+                                </#if>
+                                <#if selffunc.funcType = 1>
+                                    =
+                                </#if>
+                                <#if selffunc.funcType = 2>
+                                    >
+                                </#if>
+                                <#else>
+                                    like
+                                </#if>
+                                '${selffunc.funcValue}'
+                            <#if selffunc_has_next> and</#if>
+                        </#list>
+                        )
+                        <#if thisfunc_has_next> or </#if>
+                    </#if>
+                </#list>
+                )
+            </#if>
+
+        ]]>
+    </sql>
+
+    <sql id="getUserListForQuery" isRead="true">
+        <![CDATA[
+			SELECT u.id
+			FROM `wec_user` u
+            LEFT JOIN t_organ o ON o.id = u.organ_id
+            LEFT JOIN t_gangwei g ON g.id = u.gangwei_id
+            LEFT JOIN t_zhiwei z ON z.id = g.zhiwei_id
+			where u.company_id = :companyId
+			<#if organPaths??  && organPaths?length gt 0>
+			    AND o.organ_paths LIKE CONCAT(:organPaths,'%')
+			</#if>
+            <#if keyword?? && keyword?length gt 0>
+                AND u.user_name LIKE CONCAT('%',:keyword,'%')
+            </#if>
+			<#if userName??  && userName?length gt 0>
+			    AND u.user_name like CONCAT('%',:userName,'%')
+			</#if>
+	       	<#if dataRange??  && dataRange?length gt 0>
+           		${dataRange}
+       		</#if>
+       		<#if functions??  && functions?size gt 0>
+					AND ( 1 = 1
+		           	<#list functions as thisfunc>
+		           		<#if thisfunc??  && thisfunc?size gt 0>
+		           		 or	(
+		           		 	<#list thisfunc as selffunc>
+		           		 			${selffunc.sqlStr}
+		           		 			 	<#if selffunc.funcType??  && selffunc.funcType?length gt 0>
+		           		 			 		<#if selffunc.funcType = 0>
+		           		 			 			<
+		           		 			 		</#if>
+		           		 			 		<#if selffunc.funcType = 1>
+		           		 			 			=
+		           		 			 		</#if>
+		           		 			 		<#if selffunc.funcType = 2>
+		           		 			 			>
+		           		 			 		</#if>
+		           		 			 	<#else>
+		           		 			 	 like
+										</#if>
+		           		 			'${selffunc.funcValue}'
+		           		 		<#if selffunc_has_next> and</#if>
+		           		 	</#list>
+		          		 		)
+		          		 		<#if thisfunc_has_next> or </#if>
+		          		 	</#if>
+		       		</#list>
+		       		)
+		      	</#if>
+		]]>
+    </sql>
+
+    <sql id="getUserListForResult" isRead="true">
+        <![CDATA[
+			SELECT u.id,
+                o.id organId,
+                g.id gangweiId,
+                z.id zhiweiId,
+                u.emp_no empNo,
+                u.user_name userName,
+                o.organ_name organName,
+                o.id organId,
+                z.zhiwei_name zhiweiName,
+                g.gangwei_name gangweiName
+			FROM `wec_user` u
+            LEFT JOIN t_organ o ON o.id = u.organ_id
+            LEFT JOIN t_gangwei g ON g.id = u.gangwei_id
+            LEFT JOIN t_zhiwei z ON z.id = g.zhiwei_id
+			where u.company_id = :companyId
+			AND u.id in (:userIds)
+		]]>
+    </sql>
+
+
+
+
+    <sql id="getUserByKeyWord" isRead="true">
+        <![CDATA[
+			SELECT u.id,u.user_name userName,u.emp_no empNo,
+			p.gangwei_name positionName,o.organ_name organName,
+			u.entry_shop_date entryShopDate, u.entry_date entryDate,
+			o.id organId, p.id gangweiId
+			FROM `wec_user` u 
+			left join t_gangwei p on u.gangwei_id = p.id
+			left join t_organ o on p.organ_id = o.id
+			where u.company_id = :companyId
+			<#if userName??  && userName?length gt 0>
+			    AND u.user_name like CONCAT('%',:userName,'%')
+			</#if>
+                AND u.`status` = '0'
+                AND u.user_status not in ('40','50')
+			<#if userStatus??  && userStatus?size gt 0>
+			    AND u.user_status IN (:userStatus)
+	       	</#if>
+	       	<#if organId??  && organId?length gt 0>
+			    AND o.id = :organId
+	       	</#if>
+	       	<#if dataRange??  && dataRange?length gt 0>
+           		${dataRange}
+       		</#if>
+		]]>
+    </sql>
+    <sql id="getUserByKeyWordForRegularWorker" isRead="true">
+        <![CDATA[
+			SELECT u.id,u.user_name userName,u.emp_no empNo,
+			p.gangwei_name positionName,o.organ_name organName,
+			u.entry_shop_date entryShopDate, u.entry_date entryDate,
+			o.id organId, p.id gangweiId
+			FROM `wec_user` u
+			left join t_gangwei p on u.gangwei_id = p.id
+			left join t_organ o on p.organ_id = o.id
+			where u.company_id = :companyId
+			AND u.id NOT IN (SELECT user_id FROM t_regular_worker WHERE `status` != 5)
+			<#if userName??  && userName?length gt 0>
+			    AND u.user_name like CONCAT('%',:userName,'%')
+			</#if>
+                AND u.`status` = '0'
+			    AND u.user_status IN ('10','20')
+	       	<#if organId??  && organId?length gt 0>
+			    AND o.id = :organId
+	       	</#if>
+	       	<#if dataRange??  && dataRange?length gt 0>
+           		${dataRange}
+       		</#if>
+		]]>
+    </sql>
+     <sql id="checkUserAccount" isRead="true">
+        <![CDATA[
+		SELECT
+			count(*)
+		FROM
+			wec_account u
+		WHERE
+			u.login_id = :phone
+		and u.company_id = :companyId and u.status = 0
+		]]>
+    </sql>
+    
+    <sql id="checkUserEmpNo" isRead="true">
+        <![CDATA[
+		SELECT
+			count(*)
+		FROM
+			wec_user u
+		WHERE
+			u.emp_no = :empNo
+		and u.company_id = :companyId
+		and status != '3'
+		and user_status not in('40','50')
+		]]>
+    </sql>
+    <sql id="getUserByKeyWordWithDataRange" isRead="true">
+        <![CDATA[
+			SELECT u.id,u.user_name userName,u.emp_no empNo,
+			p.gangwei_name positionName,o.organ_name organName,
+			u.entry_shop_date entryShopDate, u.entry_date entryDate,
+			o.id organId, p.id gangweiId, z.zhiwei_name zhiweiName, z.id zhiweiId,
+			zl.name zhijiName, u.zhiji
+			FROM `wec_user` u 
+			left join t_gangwei p on u.gangwei_id = p.id
+			LEFT JOIN t_organ o ON u.organ_id = o.id
+			LEFT JOIN t_zhiwei z ON p.zhiwei_id = z.id
+			LEFT JOIN t_zhiwei_level zl ON u.zhiji = zl.id
+			where u.company_id = :companyId
+			<#if userName??  && userName?length gt 0>
+			    AND u.user_name like CONCAT('%',:userName,'%')
+			</#if>
+                AND u.`status` != '3'
+			<#if userStatus??  && userStatus?size gt 0>
+			    AND u.user_status IN (:userStatus)
+	       	</#if>
+ 			<#if path??  && path?length gt 0>
+           		AND o.organ_paths like concat(:path,'%')
+       		</#if>
+	       	<#if dataRange??  && dataRange?length gt 0>
+           		${dataRange}
+       		</#if>
+		]]>
+    </sql>
+
+    <sql id="getUsersWithSalary" isRead="true">
+        <![CDATA[
+			SELECT u.id,u.user_name userName,u.emp_no empNo,
+			p.gangwei_name positionName,o.organ_name organName,
+			u.entry_shop_date entryShopDate, u.entry_date entryDate,
+			o.id organId, p.id gangweiId, z.zhiwei_name zhiweiName, z.id zhiweiId,
+			zl.name zhijiName, u.zhiji, es.salary
+			FROM `wec_user` u 
+			left join t_gangwei p on u.gangwei_id = p.id
+			LEFT JOIN t_organ o ON u.organ_id = o.id
+			LEFT JOIN t_zhiwei z ON p.zhiwei_id = z.id
+			LEFT JOIN t_zhiwei_level zl ON u.zhiji = zl.id
+			LEFT JOIN t_emp_salary es ON u.id = es.user_id
+			where u.company_id = :companyId
+			<#if userName??  && userName?length gt 0>
+			    AND u.user_name like CONCAT('%',:userName,'%')
+			</#if>
+                AND u.`status` != '3'
+                AND u.user_status not in ('40','50')
+	       	<#if dataRange??  && dataRange?length gt 0>
+           		${dataRange}
+       		</#if>
+		]]>
+    </sql>
+
+    <sql id="getUserInfoById" isRead="true">
+        <![CDATA[
+			SELECT u.id,u.user_name userName,u.emp_no empNo,
+			p.gangwei_name positionName,o.organ_name organName,
+			u.entry_shop_date entryShopDate, u.entry_date entryDate,
+			u.zhiwei_id zhiweiId,
+			o.id organId, p.id gangweiId
+			FROM `wec_user` u 
+			left join t_gangwei p on u.gangwei_id = p.id
+			left join t_organ o on p.organ_id = o.id
+			where u.company_id = :companyId
+	       	<#if userId??  && userId?length gt 0>
+			    AND u.id = :userId
+
+	       	</#if>
+		]]>
+    </sql>
+    <sql id="findUserCusById" isRead="true">
+        <![CDATA[
+			SELECT * FROM t_ext_wec_user WHERE uid = :uid
+		]]>
+    </sql>
+    <sql id="getUserExtField" isRead="true">
+        <![CDATA[
+			SELECT
+				f.fid,
+				r.`column`,
+				f.style,
+				f.item_type itemType
+			FROM
+				t_ext_fieldbook_company_ref r
+			LEFT JOIN t_ext_fieldbook f ON r.fid = f.fid
+			WHERE
+				r.company_id = :companyId
+			AND r.`status` = '0'
+			AND r.`table` = 't_ext_wec_user'
+		]]>
+    </sql>
+    <sql id="getUserSelectValue" isRead="true">
+        <![CDATA[
+			SELECT
+			item_type itemType,item_value itemValue,item_desc itemDesc
+			FROM
+				t_item_map
+			WHERE
+				(
+					company_id = '1'
+					OR company_id = :companyId
+				)
+			AND `status` = '0'
+			AND item_type IN (:mapList)
+		]]>
+    </sql>
+
+    <sql id="getLizhiUserByKeyWord" isRead="true">
+        <![CDATA[
+			SELECT
+			u.id,
+			u.user_name userName,
+			u.emp_no empNo,
+			p.gangwei_name gangweiName,
+			o.organ_name organName,
+			o.id organId,
+			u.id_type idType,
+			u.pnid
+			FROM `wec_user` u 
+			left join t_gangwei p on u.gangwei_id = p.id
+			left join t_organ o on p.organ_id = o.id
+			where u.company_id = :companyId
+			<#if userName??  && userName?length gt 0>
+			    AND u.user_name like CONCAT('%',:userName,'%')
+			</#if>
+                AND (u.`status` = '3'
+                OR u.user_status  in ('40','50'))
+		]]>
+    </sql>
+
+    <sql id="getExtIdUserMap" isRead="true">
+        <![CDATA[
+			select r.platform_id platformId,u.user_name userName,u.id userId,u.gangwei_id positionId,u.phone
+			from t_user_platform_ref r LEFT JOIN wec_user u
+			on r.user_id= u.id 
+			where r.company_id=:companyId
+			and u.user_status != '40'
+			 <#if platformType?? && platformType?length gt 0>
+                 and r.platform_type =:platformType
+            </#if>
+			
+		]]>
+    </sql>
+
+    <sql id="getUserPlatformListByUserId" isRead="true">
+        <![CDATA[
+		    select t.platform_id platformId, u.user_name userName, u.id userId,u.gangwei_id positionId,u.phone
+		    from wec_user u LEFT JOIN t_user_platform_ref t on u.id=t.user_id
+		    where u.status != '3'
+		    and u.user_status not in('40','50') and u.id=:userId
+		    and u.company_id=:companyId
+		    <#if platformType?? && platformType?length gt 0>
+                 and t.platform_type =:platformType
+            </#if>
+        ]]>
+    </sql>
+
+    <sql id="getCompanyUserPhoneList" isRead="true">
+        <![CDATA[
+			SELECT  phone from wec_user  where company_id=:companyId
+
+		]]>
+    </sql>
+
+    <sql id="getAccountByWxUserId" isRead="true">
+        <![CDATA[
+			SELECT
+				w.*
+			FROM
+				wec_account w
+			LEFT JOIN t_platform_company p ON w.company_id = p.company_id and p.`status`=0 and  p.app_code=:appCode
+			WHERE
+				w.`status` = 0
+			AND w.wx_uid = :userId
+			AND p.corpid = :corpid
+		]]>
+    </sql>
+
+    <!--     <sql id="findUsersWithRoleName" isRead="true">
+            <![CDATA[
+                SELECT u.id, u.user_name userName, o.organ_name as organName,
+                p.gangwei_name gangweiName, u.emp_no empNo, u.pnid as pnid, p.id as gangweiId, z.id as zhiweiId
+                FROM `wec_user` u
+                left join t_gangwei p on u.gangwei_id = p.id
+                left join t_organ o on p.organ_id = o.id
+                left join t_zhiwei z on p.zhiwei_id = z.id
+                where u.company_id = :companyId and u.status != 99
+                <#if userName?? && userName?length gt 0>
+                    AND u.user_name = :userName
+                </#if>
+            ]]>
+        </sql> -->
+
+    <sql id="checkEmpnoSame">
+        <![CDATA[
+			SELECT
+				COUNT(id)
+			FROM
+				wec_user
+			WHERE
+				company_id = :companyId
+				and emp_no = :empno
+				and status in('0','2') 
+		]]>
+    </sql>
+    <sql id="InUserExtInfo" isRead="true">
+        <![CDATA[
+			INSERT INTO ${tableName} 
+		(
+		company_id
+		,uid
+		<#if filedList??  && filedList?size gt 0>
+            <#list filedList as filed>
+            ,${filed}
+        	</#list>
+        </#if>
+		)
+		VALUES
+		(
+		:companyId
+		,:uid
+		<#if valueList??  && valueList?size gt 0>
+            <#list valueList as value>
+            ,'${value}'
+        	</#list>
+        </#if>
+		)
+		]]>
+    </sql>
+    <sql id="updateUserCusInfo">
+        <![CDATA[
+		UPDATE ${tableName} 
+		set uid = :uid
+		<#if filedList??  && filedList?size gt 0>
+		<#list filedList as filed>
+            ,${filed.filed} = '${filed.value}'
+        </#list>
+		</#if>
+		where uid = :uid
+		]]>
+    </sql>
+    <sql id="getEmpFamily" isRead="true">
+        <![CDATA[
+			SELECT
+				id,
+				name,
+				relation,
+				phone,
+				remark
+			FROM
+				t_emp_family
+			WHERE
+				user_id = :userId
+		]]>
+    </sql>
+    <sql id="getEmpEdu" isRead="true">
+        <![CDATA[
+		SELECT
+			id,
+			school,
+			start_date startDate,
+			end_date endDate,
+			remark,
+			major,
+			edu_level eduLevel
+		FROM
+			t_emp_edu
+		WHERE
+			user_id = :userId
+		]]>
+    </sql>
+    <sql id="getEmpWorkexp" isRead="true">
+        <![CDATA[
+			SELECT
+				id,
+				lizhi_id lizhiId,
+				company,
+				zhiwei,
+				start_date startDate,
+				end_date endDate,
+				remark,
+				confir_mem confirMem,
+				confir_phone confirPhone
+			FROM
+				t_emp_workexp
+			WHERE
+				user_id = :userId
+		]]>
+    </sql>
+    <sql id="getEmpSocial" isRead="true">
+        <![CDATA[
+			SELECT
+				id,
+				social_account socialAccount,
+				social_start_date socialStartDate,
+				gongjijin_account gongjijinAccount,
+				gongjijin_start_date gongjijinStartDate,
+				social_base socialBase,
+				gongjijin_base gongjijinBase,
+				social_province socialProvince,
+				social_city socialCity,
+				social_area socialArea,
+				gongjijin_province gongjijinProvince,
+				gongjijin_city gongjijinCity,
+				gongjijin_area gongjijinArea
+			FROM
+				t_emp_social
+			WHERE
+				user_id = :userId
+		]]>
+    </sql>
+    <sql id = "getEmpSocialEntity" isRead="true">
+        <![CDATA[
+			SELECT
+				id,
+				user_id,
+				social_account,
+				social_start_date,
+				gongjijin_account,
+				gongjijin_start_date,
+				social_base,
+				gongjijin_base,
+				social_province,
+				social_city,
+				social_area,
+				gongjijin_province,
+				gongjijin_city,
+				gongjijin_area,
+				create_uid,
+				create_date
+			FROM
+				t_emp_social
+			WHERE
+				user_id = :userId
+		]]>
+    </sql>
+    <sql id="getEmpCommercialInsurance" isRead="true">
+        <![CDATA[
+			SELECT
+				id,
+				enter_date enterDate,
+				commer_type commerType,
+				enter_insurance_number enterInsuranceNumber,
+				order_number orderNumber,
+				exit_date exitDate
+			FROM
+				t_emp_commercial_insurance
+			WHERE
+				user_id = :userId
+		]]>
+    </sql>
+    <sql id="getEmpEntryInfo" isRead="true">
+        <![CDATA[
+			SELECT
+				id,
+				name,
+				size,
+				data_type dataType,
+				data_status dataStatus,
+				data_addr dataAddr,
+				data_num dataNum,
+				data_over_time dataOverTime
+			FROM
+				t_emp_entry_info
+			WHERE
+				user_id = :userId
+		]]>
+    </sql>
+    <sql id="removeEmpEntryInfo">
+        <![CDATA[
+			DELETE
+			FROM
+				t_emp_entry_info
+			WHERE
+				user_id = :userId
+		]]>
+    </sql>
+    <sql id="cleanUserLeftDate">
+        <![CDATA[
+			UPDATE
+              wec_user
+            SET
+              left_date = NULL
+            WHERE id = :userId
+		]]>
+    </sql>
+    <sql id="getEmpHealthy" isRead="true">
+        <![CDATA[
+			SELECT
+				id,
+				check_date checkDate,
+				height,
+				weight,
+				heart_beat heartBeat,
+				min_pressure minPressure,
+				max_pressure maxPressure,
+				remark,
+				advantage,
+				disadvantage
+			FROM
+				t_emp_healthy
+			WHERE
+				user_id = :userId
+		]]>
+    </sql>
+    <sql id="getEmpXiaoxinyanglao" isRead="true">
+        <![CDATA[
+			SELECT
+				id,
+				start_date startDate,
+				NAME,
+				pnid_type pnidType,
+				pnid,
+				bank_id bankId
+			FROM
+				t_emp_xiaoxinyanglao
+			WHERE
+				user_id = :userId
+		]]>
+    </sql>
+    <sql id="getEmpXiaoxinyanglaoVisit" isRead="true">
+        <![CDATA[
+			SELECT
+				id,
+				visitor,
+				visit_date visitDate,
+				visit_content visitContent
+			FROM
+				t_emp_xiaoxinyanglao_visit
+			WHERE
+				user_id = :userId
+		]]>
+    </sql>
+    <sql id="getCusUserExtInfo" isRead="true">
+        <![CDATA[
+			SELECT
+				id,
+			<#if fields??  && fields?size gt 0>
+            <#list fields as filed>
+            ,${filed.tableName}.${filed.filed} ${filed.name}
+        	</#list>
+        </#if>
+			FROM
+				${tableName}
+			WHERE
+				uid = :uid
+		]]>
+    </sql>
+    <sql id="getUserBaseInfoList" isRead="true">
+        <![CDATA[
+			SELECT
+				u.id,
+				u.user_name userName,
+				u.entry_date entryDate,
+				u.organ_id organId,
+				o.organ_name organName,
+				g.id gangweiId,
+				g.gangwei_name gangweiName,
+				u.entry_shop_date entryShopDate,
+				z.id zhiweiId,
+				z.zhiwei_name zhiweiName,
+				u.emp_no empNo,
+				ue.seniority seniority
+			FROM
+				wec_user u
+			LEFT JOIN wec_user_ext ue ON u.id = ue.id
+			LEFT JOIN t_gangwei g ON u.gangwei_id = g.id
+			LEFT JOIN t_zhiwei z ON g.zhiwei_id = z.id
+			LEFT JOIN t_organ o ON u.organ_id = o.id
+			WHERE
+				u.company_id = :companyId
+		<#if organId??  && organId?length gt 0>
+            AND u.organ_id = :organId
+        </#if>
+			
+		]]>
+    </sql>
+    <sql id="findUserInfoByPnid" isRead="true">
+        <![CDATA[
+			SELECT
+				u.id,
+				u.user_name userName,
+				u.entry_date entryDate,
+				u.organ_id organId,
+				o.organ_name organName,
+				g.id gangweiId,
+				g.gangwei_name gangweiName,
+				z.id zhiweiId,
+				z.zhiwei_name zhiweiName,
+				u.status,
+				u.user_status userStatus,
+				u.emp_no empNo
+			FROM
+				wec_user u
+			LEFT JOIN wec_user_ext ue ON u.id = ue.id
+			LEFT JOIN t_gangwei g ON u.gangwei_id = g.id
+			LEFT JOIN t_zhiwei z ON g.zhiwei_id = z.id
+			LEFT JOIN t_organ o ON u.organ_id = o.id
+			WHERE
+				u.company_id = :companyId
+			and pnid = :pnid
+			ORDER BY u.update_date DESC
+			LIMIT 1
+		]]>
+    </sql>
+    <sql id="getUserWithRole" isRead="true">
+        <![CDATA[
+			SELECT
+				u.id,
+				u.gangwei_id gangweiId,
+				u.organ_id organId,
+				g.zhiwei_id zhiweiId,
+				u.user_name userName,
+				g.gangwei_name gangweiName,
+				u.emp_no empNo,
+				o.organ_name organName,
+				u.pnid
+			FROM
+				wec_user u
+			LEFT JOIN t_organ o ON u.organ_id = o.id
+			LEFT JOIN t_gangwei g ON u.gangwei_id = g.id
+			WHERE u.company_id = :companyId
+			<#if path??  && path?length gt 0>
+           	AND o.organ_paths like concat(:path,'%')
+       		</#if>
+			AND u.`status` in ('0','2')
+			AND u.user_status in('10','20','30','60')
+			<#if key??  && key?length gt 0>
+           	AND (
+			o.organ_name LIKE CONCAT('%', :key, '%')
+			OR g.gangwei_name LIKE CONCAT('%', :key, '%')
+			OR u.user_name LIKE CONCAT('%', :key, '%')
+			OR u.emp_no LIKE CONCAT('%', :key, '%')
+			)
+       	</#if>
+		]]>
+    </sql>
+    <sql id="getEntryUserPage" isRead="true">
+        <![CDATA[
+            SELECT
+			u.id,
+			u.emp_no empNo,
+			u.user_name userName,
+			u.user_status userStatus,
+			u.status,
+			u.phone,
+			u.organ_id organId,
+			u.gangwei_id gangweiId,
+			g.gangwei_name gangweiName,
+			o.organ_name organName,
+			g.zhiwei_id zhiweiId,
+			z.zhiwei_name zhiweiName,
+			u.zhiji,
+			zl.name zhijiName,
+			u.entry_date entryDate,
+			u.shigang_status shigangStatus,
+			u.end_shigang_date endShigangDate,
+			eu.process_id entryProcessId,
+			da.process_id dataProcessId,
+			eu.id entryId,
+			da.id dataId,
+			DATE_FORMAT(u.update_date,'%Y-%m-%d %H:%i:%s') updateDate,
+			uu.user_name updateUserName,
+			u.id_type idType,
+			u.pnid,
+			ue.solar_birthday solarBirthday,
+			ue.age,
+			ue.gender,
+			ue.nation,
+			ue.residence_type residenceType,
+			ue.address,
+			ue.edu_level eduLevel,
+			ue.major,
+			u.bank_name bankName,
+			u.bank_id bankId,
+			ue.entry_way entryWay,
+			ue.recommend_name recommendName,
+			ue.recommend_amount recommendAmount,
+			u.first_work_date firstWorkDate,
+			ue.seniority,
+			ue.work_year workYear,
+			u.entry_shop_date entryShopDate,
+			u.work_status workStatus,
+			u.work_type workType,
+			u.trial_limit trialLimit,
+			u.expect_regular_date expectRegularDate,
+			u.actual_regular_date actualRegularDate,
+			u.attend_status attendStatus,
+			u.attend_card_no attendCardNo,
+			ue.marry_status marryStatus,
+			ue.hurry_up_man hurryUpMan,
+			ue.hurry_relative hurryRelative,
+			ue.hurry_up_phone hurryUpPhone
+			<#if selfFields??  && selfFields?size gt 0>
+			,
+            	<#list selfFields as selfField>
+           		 	ext.${selfField}
+           		 	<#if selfField_has_next>,</#if>
+        		</#list>
+       		</#if>
+		FROM
+			wec_user u
+		LEFT JOIN wec_user_ext ue ON u.id = ue.id
+		LEFT JOIN t_organ o ON o.id = u.organ_id
+		LEFT JOIN t_gangwei g ON u.gangwei_id = g.id
+		LEFT JOIN t_zhiwei z ON g.zhiwei_id = z.id
+		LEFT JOIN t_zhiwei_level zl ON u.zhiji = zl.id
+		LEFT JOIN t_entry_user eu ON eu.user_id = u.id and eu.status = '10'
+		LEFT JOIN t_data_audit da ON da.user_id = u.id and da.status = '10'
+		LEFT JOIN wec_user uu ON u.update_uid = uu.id
+		left join t_ext_wec_user ext on u.id = ext.uid
+		WHERE
+			u.company_id = :companyId
+			AND u.STATUS IN ('0', '2')
+		<#if path??  && path?length gt 0>
+           	AND o.organ_paths like concat(:path,'%')
+       	</#if>
+       	<#if inJob??>
+           	AND u.user_status IN ('10','20','30', '60')
+       	</#if>
+       	<#if gangweiId??  && gangweiId?length gt 0>
+           	AND u.gangwei_id = :gangweiId
+       	</#if>
+       	<#if key??  && key?length gt 0>
+           	AND (
+			o.organ_name LIKE CONCAT('%', :key, '%')
+			OR g.gangwei_name LIKE CONCAT('%', :key, '%')
+			OR u.user_name LIKE CONCAT('%', :key, '%')
+			OR u.emp_no LIKE CONCAT('%', :key, '%')
+			)
+       	</#if>
+       	<#if navigation??  && navigation?length gt 0>
+        <#switch navigation>
+        <#case 1>
+         AND u.shigang_status = '0'
+         AND u.STATUS = '0'
+         <#break>
+        <#case 2>
+         AND u.user_status = '10'
+         <#break>
+        <#case 3>
+         AND u.user_status = '20'
+         <#break>
+         <#case 4>
+        AND u.user_status IN ('30', '60')
+         <#break>
+         <#case 5>
+         AND u.user_status IN ('40', '50')
+         <#break>
+         <#case 6>
+         AND u.shigang_status = '0'
+		 AND u.end_shigang_date <= :date
+         <#break>
+         <#case 7>
+         AND u.audit_status = '0'
+         <#break>
+         <#case 8>
+      	 AND MONTH(ue.solar_birthday) = :month
+		 AND DAY(ue.solar_birthday) >= :todayDay
+		 AND DAY(ue.solar_birthday) <= '31'
+         <#break>
+         <#case 9>
+      	 AND u.health_over_time <= :dateOverTime
+         <#break>
+         <#case 10>
+      	 AND u.status = '2'
+         <#break>
+         <#default>
+         </#switch>
+       	</#if>
+       	<#if functions??  && functions?size gt 0>
+				and (
+            	<#list functions as thisfunc>
+            		<#if thisfunc??  && thisfunc?size gt 0>
+	           		 	(
+	           		 	<#list thisfunc as selffunc>
+	           		 			${selffunc.sqlStr}  
+	           		 			 	<#if selffunc.funcType??  && selffunc.funcType?length gt 0> 
+	           		 			 		<#if selffunc.funcType = 0>
+	           		 			 			<
+	           		 			 		</#if> 
+	           		 			 		<#if selffunc.funcType = 1>
+	           		 			 			=
+	           		 			 		</#if> 
+	           		 			 		<#if selffunc.funcType = 2>
+	           		 			 			>
+	           		 			 		</#if> 
+	           		 			 	<#else>
+	           		 			 	 like
+									</#if>  
+	           		 			'${selffunc.funcValue}'
+	           		 		<#if selffunc_has_next> and</#if>
+	           		 	</#list>	           		 		           	       
+           		 		)
+           		 		<#if thisfunc_has_next> or </#if>
+           		 	</#if>          		 	
+        		</#list>
+        		)
+       		</#if>
+       	<#if dataRange??  && dataRange?length gt 0>
+           	${dataRange}
+       	</#if>
+       	<#if querySql??  && querySql?length gt 0>
+           	${querySql}
+       	</#if>
+       	<#if sortSql??  && sortSql?length gt 0>
+           	order by ${sortSql}
+       	</#if>
+			]]>
+    </sql>
+    <sql id="getUserNavigationBarCount" isRead="true">
+        <![CDATA[
+			SELECT
+				*
+			FROM
+				(
+					SELECT
+						COUNT(*) allUser
+					FROM
+						wec_user u
+					LEFT JOIN t_organ o ON o.id = u.organ_id
+					LEFT JOIN t_gangwei g ON u.gangwei_id = g.id
+					LEFT JOIN t_zhiwei z ON g.zhiwei_id = z.id
+					LEFT JOIN wec_user uu ON u.update_uid = uu.id
+					LEFT JOIN wec_user_ext ue ON ue.id = u.id
+					WHERE
+					u.company_id = :companyId
+					<#if path??  && path?length gt 0>
+           			AND o.organ_paths like concat(:path,'%')
+       				</#if>
+					AND u.STATUS IN ('0', '2')
+			       	<#if dataRange??  && dataRange?length gt 0>
+			           	${dataRange}
+			       	</#if>
+			       	<#if key??  && key?length gt 0>
+			           	AND (
+						o.organ_name LIKE CONCAT('%', :key, '%')
+						OR g.gangwei_name LIKE CONCAT('%', :key, '%')
+						OR u.user_name LIKE CONCAT('%', :key, '%')
+						OR u.emp_no LIKE CONCAT('%', :key, '%')
+						)
+			       	</#if>
+			       <#if selfFunctions??  && selfFunctions?size gt 0>
+				AND (
+				<#list selfFunctions as thisfunc>
+					<#if thisfunc??  && thisfunc?size gt 0>
+						(
+						<#list thisfunc as selffunc>
+								${selffunc.sqlStr}  
+									<#if selffunc.funcType??  && selffunc.funcType?length gt 0> 
+										<#if selffunc.funcType = 0>
+											<
+										</#if> 
+										<#if selffunc.funcType = 1>
+											=
+										</#if> 
+										<#if selffunc.funcType = 2>
+											>
+										</#if> 
+									<#else>
+									 like
+									</#if>  
+								'${selffunc.funcValue}'
+							<#if selffunc_has_next> and</#if>
+						</#list>	           		 		           	       
+						)
+						<#if thisfunc_has_next> or </#if>
+					</#if>          		 	
+				</#list>
+				)
+			</#if>
+				) a,
+				(
+					SELECT
+						COUNT(*) shigangUser
+					FROM
+						wec_user u
+					LEFT JOIN t_organ o ON o.id = u.organ_id
+					LEFT JOIN t_gangwei g ON u.gangwei_id = g.id
+					LEFT JOIN t_zhiwei z ON g.zhiwei_id = z.id
+					LEFT JOIN wec_user uu ON u.update_uid = uu.id
+					LEFT JOIN wec_user_ext ue ON ue.id = u.id
+					WHERE
+					u.company_id = :companyId
+					<#if path??  && path?length gt 0>
+           			AND o.organ_paths like concat(:path,'%')
+       				</#if>
+       				<#if key??  && key?length gt 0>
+			           	AND (
+						o.organ_name LIKE CONCAT('%', :key, '%')
+						OR g.gangwei_name LIKE CONCAT('%', :key, '%')
+						OR u.user_name LIKE CONCAT('%', :key, '%')
+						OR u.emp_no LIKE CONCAT('%', :key, '%')
+						)
+			       	</#if>
+					AND u.STATUS IN ('0')
+					AND u.shigang_status = '0'
+			       	<#if dataRange??  && dataRange?length gt 0>
+			           	${dataRange}
+			       	</#if>
+			       	<#if selfFunctions??  && selfFunctions?size gt 0>
+				AND(
+				<#list selfFunctions as thisfunc>
+					<#if thisfunc??  && thisfunc?size gt 0>
+						(
+						<#list thisfunc as selffunc>
+								${selffunc.sqlStr}  
+									<#if selffunc.funcType??  && selffunc.funcType?length gt 0> 
+										<#if selffunc.funcType = 0>
+											<
+										</#if> 
+										<#if selffunc.funcType = 1>
+											=
+										</#if> 
+										<#if selffunc.funcType = 2>
+											>
+										</#if> 
+									<#else>
+									 like
+									</#if>  
+								'${selffunc.funcValue}'
+							<#if selffunc_has_next> and</#if>
+						</#list>	           		 		           	       
+						)
+						<#if thisfunc_has_next> or </#if>
+					</#if>          		 	
+				</#list>
+				)
+			</#if>
+				) b,
+				(
+					SELECT
+						COUNT(*) shixiUser
+					FROM
+						wec_user u
+					LEFT JOIN t_organ o ON o.id = u.organ_id
+					LEFT JOIN t_gangwei g ON u.gangwei_id = g.id
+					LEFT JOIN t_zhiwei z ON g.zhiwei_id = z.id
+					LEFT JOIN wec_user uu ON u.update_uid = uu.id
+					LEFT JOIN wec_user_ext ue ON ue.id = u.id
+					WHERE
+						u.company_id = :companyId
+					<#if path??  && path?length gt 0>
+           			AND o.organ_paths like concat(:path,'%')
+       				</#if>
+					AND u.STATUS IN ('0', '2')
+					AND u.user_status = '10'
+					<#if key??  && key?length gt 0>
+			           	AND (
+						o.organ_name LIKE CONCAT('%', :key, '%')
+						OR g.gangwei_name LIKE CONCAT('%', :key, '%')
+						OR u.user_name LIKE CONCAT('%', :key, '%')
+						OR u.emp_no LIKE CONCAT('%', :key, '%')
+						)
+			       	</#if>
+			       	<#if dataRange??  && dataRange?length gt 0>
+			           	${dataRange}
+			       	</#if>
+			    <#if selfFunctions??  && selfFunctions?size gt 0>
+				AND(
+				<#list selfFunctions as thisfunc>
+					<#if thisfunc??  && thisfunc?size gt 0>
+						(
+						<#list thisfunc as selffunc>
+								${selffunc.sqlStr}  
+									<#if selffunc.funcType??  && selffunc.funcType?length gt 0> 
+										<#if selffunc.funcType = 0>
+											<
+										</#if> 
+										<#if selffunc.funcType = 1>
+											=
+										</#if> 
+										<#if selffunc.funcType = 2>
+											>
+										</#if> 
+									<#else>
+									 like
+									</#if>  
+								'${selffunc.funcValue}'
+							<#if selffunc_has_next> and</#if>
+						</#list>	           		 		           	       
+						)
+						<#if thisfunc_has_next> or </#if>
+					</#if>          		 	
+				</#list>
+				)
+			</#if>
+				) c,
+				(
+					SELECT
+						COUNT(*) shiyongUser
+					FROM
+						wec_user u
+					LEFT JOIN t_organ o ON o.id = u.organ_id
+					LEFT JOIN t_gangwei g ON u.gangwei_id = g.id
+					LEFT JOIN t_zhiwei z ON g.zhiwei_id = z.id
+					LEFT JOIN wec_user uu ON u.update_uid = uu.id
+					LEFT JOIN wec_user_ext ue ON ue.id = u.id
+					WHERE
+						u.company_id = :companyId
+					<#if path??  && path?length gt 0>
+           			AND o.organ_paths like concat(:path,'%')
+       				</#if>
+					AND u.STATUS IN ('0', '2')
+					AND u.user_status = '20'
+					<#if key??  && key?length gt 0>
+			           	AND (
+						o.organ_name LIKE CONCAT('%', :key, '%')
+						OR g.gangwei_name LIKE CONCAT('%', :key, '%')
+						OR u.user_name LIKE CONCAT('%', :key, '%')
+						OR u.emp_no LIKE CONCAT('%', :key, '%')
+						)
+			       	</#if>
+			       	<#if dataRange??  && dataRange?length gt 0>
+			           	${dataRange}
+			       	</#if>
+			<#if selfFunctions??  && selfFunctions?size gt 0>
+				AND(
+				<#list selfFunctions as thisfunc>
+					<#if thisfunc??  && thisfunc?size gt 0>
+						(
+						<#list thisfunc as selffunc>
+								${selffunc.sqlStr}  
+									<#if selffunc.funcType??  && selffunc.funcType?length gt 0> 
+										<#if selffunc.funcType = 0>
+											<
+										</#if> 
+										<#if selffunc.funcType = 1>
+											=
+										</#if> 
+										<#if selffunc.funcType = 2>
+											>
+										</#if> 
+									<#else>
+									 like
+									</#if>  
+								'${selffunc.funcValue}'
+							<#if selffunc_has_next> and</#if>
+						</#list>	           		 		           	       
+						)
+						<#if thisfunc_has_next> or </#if>
+					</#if>          		 	
+				</#list>
+				)
+			</#if>
+				) d,
+				(
+					SELECT
+						COUNT(*) zhuanzhengUser
+					FROM
+						wec_user u
+					LEFT JOIN t_organ o ON o.id = u.organ_id
+					LEFT JOIN t_gangwei g ON u.gangwei_id = g.id
+					LEFT JOIN t_zhiwei z ON g.zhiwei_id = z.id
+					LEFT JOIN wec_user uu ON u.update_uid = uu.id
+					LEFT JOIN wec_user_ext ue ON ue.id = u.id
+					WHERE
+						u.company_id = :companyId
+					<#if path??  && path?length gt 0>
+           			AND o.organ_paths like concat(:path,'%')
+       				</#if>
+					AND u.STATUS IN ('0', '2')
+					AND u.user_status IN ('30', '60')
+					<#if key??  && key?length gt 0>
+			           	AND (
+						o.organ_name LIKE CONCAT('%', :key, '%')
+						OR g.gangwei_name LIKE CONCAT('%', :key, '%')
+						OR u.user_name LIKE CONCAT('%', :key, '%')
+						OR u.emp_no LIKE CONCAT('%', :key, '%')
+						)
+			       	</#if>
+			       	<#if dataRange??  && dataRange?length gt 0>
+			           	${dataRange}
+			       	</#if>
+			      <#if selfFunctions??  && selfFunctions?size gt 0>
+				AND(
+				<#list selfFunctions as thisfunc>
+					<#if thisfunc??  && thisfunc?size gt 0>
+						(
+						<#list thisfunc as selffunc>
+								${selffunc.sqlStr}  
+									<#if selffunc.funcType??  && selffunc.funcType?length gt 0> 
+										<#if selffunc.funcType = 0>
+											<
+										</#if> 
+										<#if selffunc.funcType = 1>
+											=
+										</#if> 
+										<#if selffunc.funcType = 2>
+											>
+										</#if> 
+									<#else>
+									 like
+									</#if>  
+								'${selffunc.funcValue}'
+							<#if selffunc_has_next> and</#if>
+						</#list>	           		 		           	       
+						)
+						<#if thisfunc_has_next> or </#if>
+					</#if>          		 	
+				</#list>
+				)
+			</#if>
+				) e,
+				(
+					SELECT
+						COUNT(*) lizhiUser
+					FROM
+						wec_user u
+						LEFT JOIN t_organ o ON o.id = u.organ_id
+					LEFT JOIN t_gangwei g ON u.gangwei_id = g.id
+					LEFT JOIN t_zhiwei z ON g.zhiwei_id = z.id
+					LEFT JOIN wec_user uu ON u.update_uid = uu.id
+					LEFT JOIN wec_user_ext ue ON ue.id = u.id
+					WHERE
+						u.company_id = :companyId
+					<#if path??  && path?length gt 0>
+           			AND o.organ_paths like concat(:path,'%')
+       				</#if>
+					AND u.STATUS IN ('0', '2')
+					AND u.user_status IN ('40', '50')
+					<#if key??  && key?length gt 0>
+			           	AND (
+						o.organ_name LIKE CONCAT('%', :key, '%')
+						OR g.gangwei_name LIKE CONCAT('%', :key, '%')
+						OR u.user_name LIKE CONCAT('%', :key, '%')
+						OR u.emp_no LIKE CONCAT('%', :key, '%')
+						)
+			       	</#if>
+			       	<#if dataRange??  && dataRange?length gt 0>
+			           	${dataRange}
+			       	</#if>
+			    <#if selfFunctions??  && selfFunctions?size gt 0>
+				AND(
+				<#list selfFunctions as thisfunc>
+					<#if thisfunc??  && thisfunc?size gt 0>
+						(
+						<#list thisfunc as selffunc>
+								${selffunc.sqlStr}  
+									<#if selffunc.funcType??  && selffunc.funcType?length gt 0> 
+										<#if selffunc.funcType = 0>
+											<
+										</#if> 
+										<#if selffunc.funcType = 1>
+											=
+										</#if> 
+										<#if selffunc.funcType = 2>
+											>
+										</#if> 
+									<#else>
+									 like
+									</#if>  
+								'${selffunc.funcValue}'
+							<#if selffunc_has_next> and</#if>
+						</#list>	           		 		           	       
+						)
+						<#if thisfunc_has_next> or </#if>
+					</#if>          		 	
+				</#list>
+				)
+			</#if>
+				) f,
+				(
+					SELECT
+						COUNT(*) endShigangUser
+					FROM
+						wec_user u
+					LEFT JOIN t_organ o ON o.id = u.organ_id
+					LEFT JOIN t_gangwei g ON u.gangwei_id = g.id
+					LEFT JOIN t_zhiwei z ON g.zhiwei_id = z.id
+					LEFT JOIN wec_user uu ON u.update_uid = uu.id
+					LEFT JOIN wec_user_ext ue ON ue.id = u.id
+					WHERE
+						u.company_id = :companyId
+					<#if path??  && path?length gt 0>
+           			AND o.organ_paths like concat(:path,'%')
+       				</#if>
+					AND u.STATUS IN ('0', '2')
+					AND u.shigang_status = '0'
+					AND u.end_shigang_date <= :date
+					<#if key??  && key?length gt 0>
+			           	AND (
+						o.organ_name LIKE CONCAT('%', :key, '%')
+						OR g.gangwei_name LIKE CONCAT('%', :key, '%')
+						OR u.user_name LIKE CONCAT('%', :key, '%')
+						OR u.emp_no LIKE CONCAT('%', :key, '%')
+						)
+			       	</#if>
+			       	<#if dataRange??  && dataRange?length gt 0>
+			           	${dataRange}
+			       	</#if>
+			     <#if selfFunctions??  && selfFunctions?size gt 0>
+				AND(
+				<#list selfFunctions as thisfunc>
+					<#if thisfunc??  && thisfunc?size gt 0>
+						(
+						<#list thisfunc as selffunc>
+								${selffunc.sqlStr}  
+									<#if selffunc.funcType??  && selffunc.funcType?length gt 0> 
+										<#if selffunc.funcType = 0>
+											<
+										</#if> 
+										<#if selffunc.funcType = 1>
+											=
+										</#if> 
+										<#if selffunc.funcType = 2>
+											>
+										</#if> 
+									<#else>
+									 like
+									</#if>  
+								'${selffunc.funcValue}'
+							<#if selffunc_has_next> and</#if>
+						</#list>	           		 		           	       
+						)
+						<#if thisfunc_has_next> or </#if>
+					</#if>          		 	
+				</#list>
+				)
+			</#if>
+				) g,
+				(
+					SELECT
+						COUNT(*) auditingUser
+					FROM
+						wec_user u
+					LEFT JOIN t_organ o ON o.id = u.organ_id
+					LEFT JOIN t_gangwei g ON u.gangwei_id = g.id
+					LEFT JOIN t_zhiwei z ON g.zhiwei_id = z.id
+					LEFT JOIN wec_user uu ON u.update_uid = uu.id
+					LEFT JOIN wec_user_ext ue ON ue.id = u.id
+					WHERE
+						u.company_id = :companyId
+					<#if path??  && path?length gt 0>
+           			AND o.organ_paths like concat(:path,'%')
+       				</#if>
+					AND u.STATUS IN ('0', '2')
+					AND u.audit_status = '0'
+					<#if key??  && key?length gt 0>
+			           	AND (
+						o.organ_name LIKE CONCAT('%', :key, '%')
+						OR g.gangwei_name LIKE CONCAT('%', :key, '%')
+						OR u.user_name LIKE CONCAT('%', :key, '%')
+						OR u.emp_no LIKE CONCAT('%', :key, '%')
+						)
+			       	</#if>
+			       	<#if dataRange??  && dataRange?length gt 0>
+			           	${dataRange}
+			       	</#if>
+			       <#if selfFunctions??  && selfFunctions?size gt 0>
+				AND(
+				<#list selfFunctions as thisfunc>
+					<#if thisfunc??  && thisfunc?size gt 0>
+						(
+						<#list thisfunc as selffunc>
+								${selffunc.sqlStr}  
+									<#if selffunc.funcType??  && selffunc.funcType?length gt 0> 
+										<#if selffunc.funcType = 0>
+											<
+										</#if> 
+										<#if selffunc.funcType = 1>
+											=
+										</#if> 
+										<#if selffunc.funcType = 2>
+											>
+										</#if> 
+									<#else>
+									 like
+									</#if>  
+								'${selffunc.funcValue}'
+							<#if selffunc_has_next> and</#if>
+						</#list>	           		 		           	       
+						)
+						<#if thisfunc_has_next> or </#if>
+					</#if>          		 	
+				</#list>
+				)
+			</#if>
+				) h,
+				(
+					SELECT
+						COUNT(*) birthdayUser
+					FROM
+						wec_user u
+					LEFT JOIN t_organ o ON o.id = u.organ_id
+					LEFT JOIN t_gangwei g ON u.gangwei_id = g.id
+					LEFT JOIN t_zhiwei z ON g.zhiwei_id = z.id
+					LEFT JOIN wec_user uu ON u.update_uid = uu.id
+					LEFT JOIN wec_user_ext ue ON ue.id = u.id
+					WHERE
+						u.company_id = :companyId
+					<#if path??  && path?length gt 0>
+           			AND o.organ_paths like concat(:path,'%')
+       				</#if>
+					AND u.STATUS IN ('0', '2')
+					AND MONTH(ue.solar_birthday) = :month
+					AND DAY(ue.solar_birthday) >= :todayDay
+					AND DAY(ue.solar_birthday) <= '31'
+					<#if key??  && key?length gt 0>
+			           	AND (
+						o.organ_name LIKE CONCAT('%', :key, '%')
+						OR g.gangwei_name LIKE CONCAT('%', :key, '%')
+						OR u.user_name LIKE CONCAT('%', :key, '%')
+						OR u.emp_no LIKE CONCAT('%', :key, '%')
+						)
+			       	</#if>
+			       	<#if dataRange??  && dataRange?length gt 0>
+			           	${dataRange}
+			       	</#if>
+			     <#if selfFunctions??  && selfFunctions?size gt 0>
+				AND(
+				<#list selfFunctions as thisfunc>
+					<#if thisfunc??  && thisfunc?size gt 0>
+						(
+						<#list thisfunc as selffunc>
+								${selffunc.sqlStr}  
+									<#if selffunc.funcType??  && selffunc.funcType?length gt 0> 
+										<#if selffunc.funcType = 0>
+											<
+										</#if> 
+										<#if selffunc.funcType = 1>
+											=
+										</#if> 
+										<#if selffunc.funcType = 2>
+											>
+										</#if> 
+									<#else>
+									 like
+									</#if>  
+								'${selffunc.funcValue}'
+							<#if selffunc_has_next> and</#if>
+						</#list>	           		 		           	       
+						)
+						<#if thisfunc_has_next> or </#if>
+					</#if>          		 	
+				</#list>
+				)
+			</#if>
+				) i,
+				(
+				SELECT
+				COUNT(*) healthyUser
+				FROM
+					(SELECT
+						u.id
+					FROM
+						wec_user u
+					LEFT JOIN t_organ o ON o.id = u.organ_id
+					LEFT JOIN t_gangwei g ON u.gangwei_id = g.id
+					LEFT JOIN t_zhiwei z ON g.zhiwei_id = z.id
+					LEFT JOIN wec_user uu ON u.update_uid = uu.id
+					LEFT JOIN wec_user_ext ue ON ue.id = u.id
+					WHERE
+						u.company_id = :companyId
+					<#if path??  && path?length gt 0>
+           			AND o.organ_paths like concat(:path,'%')
+       				</#if>
+					AND u.STATUS IN ('0', '2')
+					AND u.health_over_time <= :dateOverTime
+					<#if key??  && key?length gt 0>
+			           	AND (
+						o.organ_name LIKE CONCAT('%', :key, '%')
+						OR g.gangwei_name LIKE CONCAT('%', :key, '%')
+						OR u.user_name LIKE CONCAT('%', :key, '%')
+						OR u.emp_no LIKE CONCAT('%', :key, '%')
+						)
+			       	</#if>
+			       	<#if dataRange??  && dataRange?length gt 0>
+			           	${dataRange}
+			       	</#if>
+			       <#if selfFunctions??  && selfFunctions?size gt 0>
+				AND(
+				<#list selfFunctions as thisfunc>
+					<#if thisfunc??  && thisfunc?size gt 0>
+						(
+						<#list thisfunc as selffunc>
+								${selffunc.sqlStr}  
+									<#if selffunc.funcType??  && selffunc.funcType?length gt 0> 
+										<#if selffunc.funcType = 0>
+											<
+										</#if> 
+										<#if selffunc.funcType = 1>
+											=
+										</#if> 
+										<#if selffunc.funcType = 2>
+											>
+										</#if> 
+									<#else>
+									 like
+									</#if>  
+								'${selffunc.funcValue}'
+							<#if selffunc_has_next> and</#if>
+						</#list>	           		 		           	       
+						)
+						<#if thisfunc_has_next> or </#if>
+					</#if>          		 	
+				</#list>
+				)
+			</#if>
+					group by u.id
+					)health
+				) j
+				,
+				(
+					SELECT
+						COUNT(*) approveCount
+					FROM
+						wec_user u
+					LEFT JOIN t_organ o ON o.id = u.organ_id
+					LEFT JOIN t_gangwei g ON u.gangwei_id = g.id
+					LEFT JOIN t_zhiwei z ON g.zhiwei_id = z.id
+					LEFT JOIN wec_user uu ON u.update_uid = uu.id
+					LEFT JOIN wec_user_ext ue ON ue.id = u.id
+					WHERE
+						u.company_id = :companyId
+					<#if path??  && path?length gt 0>
+           			AND o.organ_paths like concat(:path,'%')
+       				</#if>
+					AND u.STATUS IN ('2')
+					<#if key??  && key?length gt 0>
+			           	AND (
+						o.organ_name LIKE CONCAT('%', :key, '%')
+						OR g.gangwei_name LIKE CONCAT('%', :key, '%')
+						OR u.user_name LIKE CONCAT('%', :key, '%')
+						OR u.emp_no LIKE CONCAT('%', :key, '%')
+						)
+			       	</#if>
+			       	<#if dataRange??  && dataRange?length gt 0>
+			           	${dataRange}
+			       	</#if>
+			      <#if selfFunctions??  && selfFunctions?size gt 0>
+				AND(
+				<#list selfFunctions as thisfunc>
+					<#if thisfunc??  && thisfunc?size gt 0>
+						(
+						<#list thisfunc as selffunc>
+								${selffunc.sqlStr}  
+									<#if selffunc.funcType??  && selffunc.funcType?length gt 0> 
+										<#if selffunc.funcType = 0>
+											<
+										</#if> 
+										<#if selffunc.funcType = 1>
+											=
+										</#if> 
+										<#if selffunc.funcType = 2>
+											>
+										</#if> 
+									<#else>
+									 like
+									</#if>  
+								'${selffunc.funcValue}'
+							<#if selffunc_has_next> and</#if>
+						</#list>	           		 		           	       
+						)
+						<#if thisfunc_has_next> or </#if>
+					</#if>          		 	
+				</#list>
+				)
+			</#if>
+				) k
+		]]>
+    </sql>
+
+    <sql id="getUserIdByOrganId" isRead="true">
+        <![CDATA[
+            SELECT
+                u.id
+            FROM
+                wec_user u
+                LEFT JOIN t_organ o ON o.id = u.organ_id
+            WHERE
+                o.organ_paths LIKE CONCAT (:organPaths, '%' )
+                and u.company_id = :companyId
+		]]>
+    </sql>
+    <sql id="getUserIdByOrganIdAndUserStatus" isRead="true">
+        <![CDATA[
+		SELECT
+			id
+		FROM
+			wec_user
+		WHERE
+			company_id = :companyId
+		AND organ_id = :organId
+		AND `status` in (0,2)
+		AND user_status IN (:userStatus)
+		]]>
+    </sql>
+    <sql id="getUserIdByOrganPath" isRead="true">
+        <![CDATA[
+        SELECT
+			u.id
+		FROM
+			wec_user u
+		LEFT JOIN t_organ o ON u.organ_id = o.id
+		WHERE
+			u.company_id = :companyId
+		AND o.organ_paths LIKE CONCAT(:path,'%')
+		AND u.`status` in (0,2)
+		and u.attend_status in (2,3)
+		AND u.user_status IN ('10','20','30','60')
+		]]>
+    </sql>
+    <sql id="getYuejieUserIdByOrganPath" isRead="true">
+        <![CDATA[
+        SELECT
+			u.id
+		FROM
+			wec_user u
+		LEFT JOIN t_organ o ON u.organ_id = o.id
+		left join t_lizhi l on l.user_id = u.id
+		WHERE
+			u.company_id = :companyId
+		AND o.organ_paths LIKE CONCAT(:path,'%')
+		AND u.`status` in (0,2)
+		and u.attend_status in (2,3)
+		AND ( u.user_status IN (10,20,30,60) or (u.user_status = 40 and l.left_date >= :firstDate and l.is_last = 0))
+		group by u.id
+		]]>
+    </sql>
+
+    <sql id="getUserBaseInfoByUid" isRead="true">
+        <![CDATA[
+		SELECT
+			u.id userId,
+			u.user_name userName,
+			u.entry_date entryDate,
+			u.left_date leftDate,
+			u.gangwei_id gangweiId,
+			g.zhiwei_id zhiweiId,
+			u.organ_id organId,
+			u.user_status userStatus,
+			u.work_status workStatus,
+			u.work_type workType
+		FROM
+			wec_user u
+		LEFT JOIN t_gangwei g ON u.gangwei_id = g.id
+		WHERE
+			u.id = :userId
+		]]>
+    </sql>
+    <sql id="getUserBaseInfoByUidFromMainDatabase">
+        <![CDATA[
+		SELECT
+			u.id userId,
+			u.user_name userName,
+			u.entry_date entryDate,
+			u.left_date leftDate,
+			u.gangwei_id gangweiId,
+			g.zhiwei_id zhiweiId,
+			u.organ_id organId,
+			u.user_status userStatus,
+			u.work_status workStatus,
+			u.work_type workType
+		FROM
+			wec_user u
+		LEFT JOIN t_gangwei g ON u.gangwei_id = g.id
+		WHERE
+			u.id = :userId
+		]]>
+    </sql>
+    <sql id="getUserIdByGangweiId" isRead="true">
+        <![CDATA[
+		SELECT
+			id
+		FROM
+			wec_user
+		WHERE
+			company_id = :companyId
+		AND gangwei_id = :gangweiId
+		AND `status` = '0'
+		AND user_status IN ('10','20','30','60')
+		]]>
+    </sql>
+    <sql id="getUserIdByGangweiIdAndUserStatus" isRead="true">
+        <![CDATA[
+		SELECT
+			id
+		FROM
+			wec_user
+		WHERE
+			company_id = :companyId
+		AND gangwei_id = :gangweiId
+		AND `status` in (0,2)
+		AND user_status IN (:userStatus)
+		]]>
+    </sql>
+    <sql id="getUserIdByZhiweiId" isRead="true">
+        <![CDATA[
+		SELECT
+			u.id
+		FROM
+			wec_user u 
+		LEFT JOIN t_gangwei g ON u.gangwei_id = g.id 
+		WHERE
+			u.company_id = :companyId
+		AND g.zhiwei_id = :zhiweiId
+		AND u.`status` = '0'
+		AND u.user_status IN ('10','20','30','60')
+		]]>
+    </sql>
+    <sql id="getUserIdByZhiweiIdAndUserStatus" isRead="true">
+        <![CDATA[
+		SELECT
+			u.id
+		FROM
+			wec_user u
+		LEFT JOIN t_gangwei g ON u.gangwei_id = g.id
+		WHERE
+			u.company_id = :companyId
+		AND g.zhiwei_id = :zhiweiId
+		AND u.`status` in (0,2)
+		AND u.user_status IN (:userStatus)
+		]]>
+    </sql>
+    <sql id="getUserInfoByPnid" isRead="true">
+        <![CDATA[
+		SELECT
+			id,organ_id organId,gangwei_id gangweiId,user_status userStatus
+		FROM
+			wec_user
+		WHERE
+			pnid = :pnid
+			and company_id = :companyId
+			and id_type = :idType
+			and status != 3
+		]]>
+    </sql>
+    <sql id="getUserExpForYear" isRead="true">
+        <![CDATA[
+		SELECT
+			id,
+			user_id userId,
+			company,
+			start_date startDate,
+			end_date endDate
+		FROM
+			t_emp_workexp
+		WHERE
+			user_id = :userId
+		AND start_date >= :date
+		AND company = :company
+		]]>
+    </sql>
+    <sql id="getEmpSalary" isRead="true">
+        <![CDATA[
+		SELECT
+			u.user_name userName,
+			u.emp_no empNo,
+			o.id organId,
+			o.organ_name organName,
+			gw.gangwei_name gangweiName,
+			u.entry_date entryDate,
+			es.salary salary
+		FROM
+			wec_user u
+		LEFT JOIN t_organ o ON o.id = u.organ_id
+		LEFT JOIN t_gangwei gw ON gw.id = u.gangwei_id
+		LEFT JOIN t_emp_salary es ON es.user_id = u.id
+		WHERE
+			u.id= :userId
+		]]>
+    </sql>
+    <sql id="getPGangweUserByUserId" isRead="true">
+        <![CDATA[
+		SELECT
+			su.id
+		FROM
+			wec_user u
+		LEFT JOIN t_gangwei g ON u.gangwei_id = g.id
+		LEFT JOIN wec_user su ON g.pid = su.gangwei_id
+		WHERE
+			u.id = :userId
+		AND su.`status` = 0
+		AND su.user_status not in('40','50')
+		]]>
+    </sql>
+    <sql id="getOrganChargeUserByUserId" isRead="true">
+        <![CDATA[
+		SELECT
+			o.charge_user_id
+		FROM
+			wec_user u
+		LEFT JOIN t_organ o ON u.organ_id = o.id
+		WHERE
+			u.id = :userId
+		]]>
+    </sql>
+    <sql id="getPOrganChargeUserByUserId" isRead="true">
+        <![CDATA[
+		SELECT
+			po.charge_user_id
+		FROM
+			wec_user u
+		LEFT JOIN t_organ o ON u.organ_id = o.id
+		LEFT JOIN t_organ po ON o.pid = po.id
+		WHERE
+			u.id = :userId
+		]]>
+    </sql>
+    <sql id="getPGangweUserByGangweiId" isRead="true">
+        <![CDATA[
+		SELECT
+			su.id
+		FROM
+			 t_gangwei g 
+		LEFT JOIN wec_user su ON g.pid = su.gangwei_id
+		WHERE
+			g.id = :gangweiId
+		AND su.`status` = 0
+		AND su.user_status not in('40','50')
+		]]>
+    </sql>
+    <sql id="getOrganChargeUserByGangweiId" isRead="true">
+        <![CDATA[
+		SELECT
+			o.charge_user_id
+		FROM
+			t_gangwei g
+		LEFT JOIN t_organ o ON g.organ_id = o.id
+		WHERE
+			g.id = :gangweiId
+		]]>
+    </sql>
+    <sql id="getPOrganChargeUserByGangweiId" isRead="true">
+        <![CDATA[
+		SELECT
+			po.charge_user_id
+		FROM
+			t_gangwei g
+		LEFT JOIN t_organ o ON g.organ_id = o.id
+		LEFT JOIN t_organ po ON o.pid = po.id
+		WHERE
+			g.id = :gangweiId
+		]]>
+    </sql>
+    <sql id="getAuditGangweiIdByZhiweiOrgan" isRead="true">
+        <![CDATA[
+		SELECT
+			g.id
+		FROM
+			t_gangwei g
+		LEFT JOIN t_zhiwei z ON g.zhiwei_id = z.id
+		WHERE z.id = :zhiweiId
+		AND g.`status` = 0
+		]]>
+    </sql>
+    <sql id="getAuditUserIdByGangwei" isRead="true">
+        <![CDATA[
+		SELECT
+			id
+		FROM
+			wec_user
+		WHERE
+			gangwei_id IN (:gangweiIds)
+		AND `status` = 0
+		AND user_status NOT IN ('50', '40')
+		]]>
+    </sql>
+    <sql id="getUserByEmpNo" isRead="true">
+        <![CDATA[
+		SELECT
+			u.id uid,
+			u.user_name userName,
+			u.entry_date entryDate,
+			o.id organId,
+			o.organ_name organName,
+			gw.gangwei_name gangweiName
+		FROM
+			wec_user u
+			left join t_organ o on o.id=u.organ_id
+			left join t_gangwei gw on gw.id=u.gangwei_id
+		WHERE
+			u.company_id = :companyId
+		AND u.`status` = 0
+		AND u.emp_no = :empNo
+		]]>
+    </sql>
+    <sql id="getUserBaseInfoListByGangwei" isRead="true">
+        <![CDATA[
+		SELECT
+			id,
+			user_name userName
+		FROM
+			wec_user
+		WHERE
+			gangwei_id = :gangweiId
+		AND company_id = :companyId
+		AND user_status NOT IN ('50', '40')
+		AND `status` != '3'
+		<#if key??  && key?length gt 0>
+		and user_name like concat('%',:key,'%')
+       	</#if>
+		]]>
+    </sql>
+    <sql id="getWaitRegularUser" isRead="true">
+        <![CDATA[
+			SELECT
+                id,
+                emp_no ,
+                user_name ,
+                company_id ,
+                gangwei_id ,
+                organ_id ,
+                expect_regular_date
+            FROM
+                wec_user
+            WHERE
+                expect_regular_date <= :date
+            AND `status` = 0
+            AND user_status = '20'
+            <#if companyId??  && companyId?length gt 0>
+            AND company_id = :companyId
+            </#if>
+		]]>
+    </sql>
+    <!-- 查询需要计算司龄的人 -->
+    <sql id="getSeniorityUserList" isRead="true">
+        <![CDATA[
+		SELECT
+			u.id,u.entry_date entryDate,u.work_status workStatus,u.organ_id organId,u.company_id companyId,u.first_work_date firstWorkDate
+		FROM
+			wec_user u
+		LEFT JOIN wec_user_ext ue ON u.id = ue.id
+		WHERE
+			u.company_id = :companyId
+		AND u.`status` != 3
+		AND u.user_status in ('10','20','30','60')
+		AND (ue.seniority_count_date < :date OR ue.seniority_count_date is null)
+		]]>
+    </sql>
+     <!-- 查询需要计算工龄的人 -->
+    <sql id="getWorkUserList" isRead="true">
+        <![CDATA[
+		SELECT
+			u.id,u.entry_date entryDate,u.work_status workStatus,u.organ_id organId,u.company_id companyId,u.first_work_date firstWorkDate
+		FROM
+			wec_user u
+		LEFT JOIN wec_user_ext ue ON u.id = ue.id
+		WHERE
+			u.company_id = :companyId
+		AND u.`status` != 3
+		and u.first_work_date is not null
+		]]>
+    </sql>
+    <sql id="getProvinceCityStreet" isRead="true">
+        <![CDATA[
+		SELECT
+			*
+		FROM
+			t_sys_area
+		WHERE
+			type = :type
+		<#if pid??  && pid?length gt 0>
+		AND pid = :pid
+       	</#if>
+		
+		]]>
+    </sql>
+    <sql id="getEntryUserProcessId" isRead="true">
+        <![CDATA[
+		SELECT
+			process_id
+		FROM
+			t_entry_user
+		WHERE
+			user_id = :userId
+			and status = '10'
+		
+		]]>
+    </sql>
+    <sql id="getEntryUserId" isRead="true">
+        <![CDATA[
+		SELECT
+			id
+		FROM
+			t_entry_user
+		WHERE
+			user_id = :userId
+			and status = '10'
+		]]>
+    </sql>
+    <sql id="getDataAuditId" isRead="true">
+        <![CDATA[
+		SELECT
+			id
+		FROM
+			t_data_audit
+		WHERE
+			user_id = :userId
+			and status = '10'
+		]]>
+    </sql>
+    <sql id="getEntryUserProcessIdList" isRead="true">
+        <![CDATA[
+		SELECT
+			process_id
+		FROM
+			t_entry_user
+		WHERE
+			user_id IN (:userIds) 
+			and status = '10'
+		
+		]]>
+    </sql>
+    <sql id="getDataAuditProcessId" isRead="true">
+        <![CDATA[
+		SELECT
+			process_id
+		FROM
+			t_data_audit
+		WHERE
+			user_id = :userId
+			and status = '10'
+		
+		]]>
+    </sql>
+    <sql id="getDataAuditProcessIdList" isRead="true">
+        <![CDATA[
+		SELECT
+			process_id
+		FROM
+			t_data_audit
+		WHERE
+			user_id IN (:userIds)
+			and status = '10'
+		
+		]]>
+    </sql>
+    <sql id="getWaitShigangUserList" isRead="true">
+        <![CDATA[
+		SELECT
+			*
+		FROM
+			wec_user
+		WHERE
+			shigang_status = 0
+		AND end_shigang_date <= :date
+		
+		]]>
+    </sql>
+    <sql id="updateShigangPass">
+        <![CDATA[
+		UPDATE wec_user
+		SET shigang_status = '1',
+		 end_shigang_date = :date
+		WHERE
+			id IN (:userIds)
+		]]>
+    </sql>
+
+    <sql id="getUserBaseInfoById" isRead="true">
+        <![CDATA[
+		SELECT
+			u.*, o.organ_name organName,
+			g.gangwei_name gangweiName,
+			z.id zhiweiId,
+			zl.name zhijiName,
+			z.zhiwei_name zhiweiName
+		FROM
+			wec_user u
+		LEFT JOIN t_organ o ON u.organ_id = o.id
+		LEFT JOIN t_gangwei g ON u.gangwei_id = g.id
+		LEFT JOIN t_zhiwei z ON g.zhiwei_id = z.id
+		LEFT JOIN t_zhiwei_level zl ON u.zhiji = zl.id
+		WHERE
+			u.id = :userId
+		]]>
+    </sql>
+    <sql id="checkUserPhone" isRead="true">
+        <![CDATA[
+		SELECT
+			u.*
+		FROM
+			wec_user u
+		WHERE
+			u.phone = :phone
+		and u.company_id = :companyId
+		and u.status != '3'
+		and u.user_status in ('10','20','30','60')
+		]]>
+    </sql>
+    <sql id="getAssignUserPage" isRead="true">
+        <![CDATA[
+		SELECT
+			u.id,
+			u.user_name userName,
+			u.emp_no empNo,
+			u.organ_id organId,
+			tg.gangwei_name gangweiName
+		FROM
+			wec_user u
+		left join t_organ o on u.organ_id = o.id
+		left join t_gangwei tg on tg.id=u.gangwei_id
+		WHERE
+			u.company_id = :companyId
+		<#if path??  && path?length gt 0>
+           AND o.organ_paths like concat(:path,'%')
+       	</#if>
+       	 <#if key??  && key?length gt 0>
+           AND (
+                  o.organ_name LIKE CONCAT('%', :key, '%')
+                  OR u.user_name LIKE CONCAT('%', :key, '%')
+                  or u.emp_no like concat('%',:key,'%')
+                  )
+        </#if>
+		AND u.status = '0'
+		AND u.user_status IN ('10', '20', '30', '60')
+		${dataRange}
+		]]>
+    </sql>
+    <sql id="getGangweiIdZhiweiIdOrganId" isRead="true">
+        <![CDATA[
+            SELECT
+                u.id,
+                u.company_id companyId,
+                u.user_name userName,
+                u.attend_status attendStatus,
+                u.organ_id organId,
+                u.gangwei_id gangweiId,
+                g.gangwei_name gangweiName,
+                g.zhiwei_id zhiweiId,
+                u.work_type workType
+            FROM
+                wec_user u
+                LEFT JOIN t_gangwei g ON g.id = u.gangwei_id
+            WHERE
+                u.id = :userId
+
+        ]]>
+    </sql>
+    <sql id="getRijieKaoqinUsers" isRead="true">
+        <![CDATA[
+        	SELECT
+				u.id,
+				u.company_id companyId,
+				u.user_name userName,
+				u.organ_id organId,
+				u.attend_status attendStatus,
+				u.gangwei_id gangweiId,
+				g.zhiwei_id zhiweiId
+			FROM
+				wec_user u
+			left join t_lizhi l on u.id = l.user_id
+			LEFT JOIN t_gangwei g on u.gangwei_id = g.id
+			left join t_organ o on u.organ_id = o.id
+			WHERE u.company_id = :companyId
+			and u.status in (0,2)
+			and u.attend_status in (2,3)
+			<#if organPaths??  && organPaths?length gt 0>
+			and o.organ_paths LIKE CONCAT (:organPaths, '%' )
+			</#if>
+			and u.entry_date <= :kqStartDate
+			<#if userIdList??  && userIdList?size gt 0>
+	           AND u.id in (:userIdList)
+	       	</#if>
+
+			<#if dataRange??  && dataRange?length gt 0>
+                ${dataRange}
+            </#if>
+            	and (u.user_status in (10,20,30,60)
+			or (u.user_status = 40 and l.left_date >= :kqStartDate and l.is_last = 0)
+			)
+			group by u.id
+		]]>
+    </sql>
+
+    <sql id="findAllUser" isRead="true">
+        <![CDATA[
+                SELECT
+                    id,
+                    entry_date entryDate
+                FROM
+                    wec_user
+                WHERE
+                    company_id = :companyId
+                    AND user_status IN ( 10, 20, 30, 60 )
+                    and attend_status in (2,3)
+                    and `status` in (0,2)
+                union
+                SELECT
+                    u.id,
+                    u.entry_date entryDate
+                FROM
+                    wec_user u
+                    left join t_lizhi l on l.user_id = u.id
+                WHERE
+                    u.company_id = :companyId
+                    AND u.user_status = 40
+                    and u.attend_status in (2,3)
+                    and u.`status` in (0,2)
+                    and l.left_date >= :lastMonthInitDay
+        ]]>
+    </sql>
+
+
+    <sql id="findAllUserInsurance" isRead="true">
+        <![CDATA[
+                SELECT
+                    id,
+                    entry_date entryDate
+                FROM
+                    wec_user
+                WHERE
+                    company_id = :companyId
+                    and `status` in (0,2)
+        ]]>
+    </sql>
+
+    <sql id="findUserIdsByOrganIds" isRead="true">
+        <![CDATA[
+                SELECT
+                    id
+                FROM
+                    wec_user u
+                WHERE
+                    u.organ_id in (:organIds)
+		            AND u.company_id = :companyId
+		            AND u.`status` != '3'
+		            AND u.user_status not in ('40','50')
+        ]]>
+    </sql>
+
+    <!-- 算上借调进来的的人员部分， 排除掉借调出去的部分 用 union 自动过滤重复 -->
+    <sql id="findUserIdsByOrganIdsWithJiediao" isRead="true">
+        <![CDATA[
+                SELECT id FROM wec_user u
+                WHERE u.organ_id in (:organIds) AND u.company_id = :companyId AND u.`status` != '3' AND u.user_status not in ('40','50')
+                AND  u.id not in (
+                    select user_id from t_jiediao j  where j.dept_from in (:organIds) and j.company_id = :companyId 
+                    and if(terminate_date is null, over_date > now(), (over_date > now() and terminate_date > now())) and (j.status = 60 or j.status = 70)
+                    )
+                union 
+                select user_id as id from t_jiediao where dept_to in (:organIds) and company_id = :companyId and status in ('60', '70') 
+                and if(terminate_date is null, over_date > now(), (over_date > now() and terminate_date > now()))
+        ]]>
+    </sql>
+
+    <sql id="getUserLight" isRead="true">
+        <![CDATA[
+                SELECT
+				u.id,
+				o.id organId,
+				g.id gangweiId,
+				z.id zhiweiId,
+				u.emp_no empNo,
+				u.user_name userName,
+				o.organ_name organName,
+				z.zhiwei_name zhiweiName,
+				g.gangwei_name gangweiName
+				FROM
+				wec_user u
+				LEFT JOIN t_organ o ON o.id = u.organ_id
+				LEFT JOIN t_gangwei g ON g.id = u.gangwei_id
+				LEFT JOIN t_zhiwei z ON z.id = g.zhiwei_id
+				WHERE 
+				u.id = :id
+        ]]>
+    </sql>
+    <sql id="getUserLightByEmpNoAndUserName" isRead="true">
+        <![CDATA[
+            select
+                id,company_id, zhiwei_id, gangwei_id, user_name, id_type, pnid, `status`,emp_no
+            from
+                wec_user
+            where
+                company_id = :companyId and user_name = :userName and emp_no = :empNo
+        ]]>
+    </sql>
+    <sql id="findUserByIdAndTimeInterval" isRead="true">
+        <![CDATA[
+            select
+                entry_date
+            from
+                wec_user
+            where
+                id = :id and ( entry_date between :startDate and :endDate)
+        ]]>
+    </sql>
+    <sql id="getEntryUserPageH5" isRead="true">
+        <![CDATA[
+            SELECT
+			u.id,
+			u.emp_no empNo,
+			u.user_name userName,
+			u.user_status userStatus,
+			u.status,
+			u.phone,
+			u.organ_id organId,
+			u.gangwei_id gangweiId,
+			g.gangwei_name gangweiName,
+			o.organ_name organName,
+			g.zhiwei_id zhiweiId,
+			z.zhiwei_name zhiweiName
+			FROM
+				wec_user u
+			LEFT JOIN t_organ o ON o.id = u.organ_id
+			LEFT JOIN t_gangwei g ON u.gangwei_id = g.id
+			LEFT JOIN t_zhiwei z ON g.zhiwei_id = z.id
+			LEFT JOIN t_lizhi l on u.id = l.user_id
+			WHERE
+				u.company_id = :companyId
+				AND u.STATUS IN ('0', '2')
+			<#if userName??  && userName?length gt 0>
+			    AND u.user_name like CONCAT('%',:userName,'%')
+			</#if>
+			<#if userId??  && userId?length gt 0>
+	           	AND u.id = :userId
+	       	</#if>
+			<#if path??  && path?length gt 0>
+	           	AND o.organ_paths like concat(:path,'%')
+	       	</#if>
+	       	<#if inJob?? && inJob = 0>
+	           	AND u.user_status IN ('10','20','30', '60')
+	       	</#if>
+	       	<#if inJob?? && inJob = 1>
+	           	AND u.user_status IN ('40','50')
+	       	</#if>
+	       	<#if workType??  && workType?length gt 0>
+	           	AND u.work_type = :workType
+	       	</#if>
+	       	<#if workStatus??  && workStatus?length gt 0>
+	           	AND u.work_status = :workStatus
+	       	</#if>
+	       	<#if userStatus??  && userStatus?length gt 0>
+	           	AND u.user_status = :userStatus
+	       	</#if>
+	       	<#if leftDateString??  && leftDateString?length gt 0>
+	           	AND date_format(l.left_date,'%Y-%m-%d') = :leftDateString and l.status = 5
+	       	</#if>
+	       	<#if entryDate??  && entryDate?length gt 0>
+	           	AND date_format(u.entry_date,'%Y-%m-%d') = :entryDate
+	       	</#if>
+	       	<#if birthdayMonth??  && birthdayMonth?length gt 0>
+	           	AND substring(u.pnid,11,2) = :birthdayMonth
+	       	</#if>
+	       	<#if dataRange??  && dataRange?length gt 0>
+	           	${dataRange}
+	       	</#if>
+	       group by
+	       u.id
+		]]>
+    </sql>
+    <sql id="findAllUserQuickInfo" isRead="true">
+        <![CDATA[
+            SELECT
+                u.id userId,
+                u.company_id companyId,
+                u.entry_date entryDate,
+                u.first_work_date firstWorkDate,
+                u.actual_regular_date regularDate,
+                u.gangwei_id gangweiId,
+                u.organ_id organId,
+                u.user_status userStatus,
+                u.work_status workStatus,
+                u.work_type workType,
+                u.left_date leftDate,
+                g.zhiwei_id zhiweiId
+            FROM
+                wec_user u
+                LEFT JOIN t_gangwei g ON u.gangwei_id = g.id
+            LIMIT :start, :pageSize
+        ]]>
+    </sql>
+    <!--批量查询员工的考勤机系统中员工ID-->
+    <sql id="findKqjYuanGongIds" isRead="true">
+        <![CDATA[
+            SELECT
+                u.kqj_user_id
+            FROM
+                wec_user u
+            where  u.kqj_user_id is not null and u.id in
+            (
+            <#list idList as item>
+			        '${item}'
+			        <#if item_has_next>,</#if>
+			</#list>
+            )
+        ]]>
+    </sql>
+
+    <!--查询用户集合中未加入考勤机系统的用户ID集合-->
+    <sql id="findKqjNotAddUserIds" isRead="true">
+        <![CDATA[
+            SELECT
+                DISTINCT w.id
+            FROM
+                wec_user w
+            WHERE
+                w.id IN (
+                 <#list idList as item>
+			        '${item}'
+			        <#if item_has_next>,</#if>
+			     </#list>
+                )
+            AND w.kqj_user_id IS NULL
+        ]]>
+    </sql>
+    <sql id="getUserSocialInfo" isRead="true">
+        <![CDATA[
+            SELECT
+                o.organ_name organName,
+                u.emp_no empNo,
+                u.user_name userName,
+                t.social_base socialBase,
+                t.gongjijin_base gongjijinBase,
+                u.entry_date entryDate
+            FROM
+                wec_user u
+                LEFT JOIN t_organ o ON u.organ_id = o.id
+                LEFT JOIN t_emp_social t ON u.id = t.user_id
+            WHERE
+                u.id in (:userIds)
+                and u.company_id = :companyId
+                <#if keyword??  && keyword?length gt 0>
+                     AND (
+                            o.organ_name LIKE CONCAT('%', :keyword, '%')
+                            OR u.user_name LIKE CONCAT('%', :keyword, '%')
+                            or u.emp_no like concat('%',:keyword,'%')
+                            )
+                </#if>
+            group by u.id
+        ]]>
+    </sql>
+
+    <!--查询用户姓名和ID-->
+    <sql id="findNameAndId" isRead="true">
+        <![CDATA[
+            SELECT
+                u.id id,
+                u.user_name name,
+                u.phone
+            FROM
+                wec_user u
+            where  u.kqj_user_id is not null and u.id in
+            (:idList)
+        ]]>
+    </sql>
+
+    <!--查询公司下所有员工ID与考勤机系统中员工的对应关系-->
+    <sql id="getAllKqjUserInfoByCompany" isRead="true">
+        <![CDATA[
+           SELECT
+                u.id id,
+                u.kqj_user_id 'name'
+            FROM
+                wec_user u
+            WHERE
+                u.company_id =:companyId
+            AND u.kqj_user_id IS NOT NULL
+        ]]>
+    </sql>
+
+    <!--查询员工所在公司ID-->
+    <sql id="getUserCompany" isRead="true">
+        <![CDATA[
+           SELECT
+                u.company_id companyId
+             FROM
+                wec_user u
+            WHERE
+                u.id =:id
+        ]]>
+    </sql>
+    <sql id="getEmpSocialInfoByUserId" isRead="true">
+        <![CDATA[
+            select
+                u.id userId,
+                s.social_account socialAccount,
+                s.social_start_date socialStartDate,
+                s.social_province socialProvince,
+                s.social_city socialCity,
+                s.social_area socialArea,
+                s.social_base socialBase,
+                s.gongjijin_account gongJJAccount,
+                s.gongjijin_start_date gongJJStartDate,
+                s.gongjijin_province gongJJProvince,
+                s.gongjijin_city gongJJCity,
+                s.gongjijin_area gongJJArea,
+                s.gongjijin_base gongJJBase,
+                uu.residence_type residenceType,
+                u.user_name userName
+            from
+                wec_user u
+                left join wec_user_ext uu on u.id = uu.id
+                left join t_emp_social s on u.id = s.user_id
+            where
+                u.id = :userId
+        ]]>
+    </sql>
+
+    <sql id="getUserIdByEntryDate" isRead="true">
+        <![CDATA[
+            select
+                id,
+                user_status,
+                organ_id,
+                gangwei_id,
+                zhiwei_id
+            from
+                wec_user
+            where
+                entry_date >= :startDate and entry_date <= :endDate
+                and company_id = :companyId
+        ]]>
+    </sql>
+    <sql id="getArea" isRead="true">
+        <![CDATA[
+            select
+                label,id ,pid
+            from
+                t_sys_area
+        ]]>
+    </sql>
+    <sql id="getInsuranceArea" isRead="true">
+        <![CDATA[
+            select
+                label,id ,pid
+            from
+                t_insurance_area
+        ]]>
+    </sql>
+    <sql id="getGeShui" isRead="true">
+        <![CDATA[
+            select * from t_emp_geshui where user_id = :userId
+        ]]>
+    </sql>
+    <sql id="getSeriousIllness" isRead="true">
+        <![CDATA[
+            select * from t_emp_serious_illness where user_id = :userId
+        ]]>
+    </sql>
+    <sql id="getSkill" isRead="true">
+        <![CDATA[
+            select * from t_emp_skill where user_id = :userId
+        ]]>
+    </sql>
+     <sql id="getUsersByEmpNos" isRead="true">
+        <![CDATA[
+           SELECT
+			u.id,
+			u.user_name userName,
+			o.organ_name organName,
+			u.organ_id organId,
+			g.gangwei_name gangweiName,
+			z.zhiwei_name zhiweiName,
+			u.emp_no empNo
+		FROM
+			wec_user u
+		LEFT JOIN t_organ o ON o.id = u.organ_id
+		LEFT JOIN t_gangwei g ON g.id = u.gangwei_id
+		LEFT JOIN t_zhiwei z ON z.id = u.zhiwei_id
+		WHERE
+			u.company_id = :companyId
+		AND u.`status` != 3
+		AND u.user_status NOT IN ('40', '50')
+		AND u.emp_no IN (:empNos)
+        ]]>
+    </sql>
+    <sql isRead="true" id="getUserByPhone">
+        <![CDATA[
+            SELECT
+                id , company_id ,user_name
+            FROM
+                wec_user
+            WHERE
+                phone = :phone
+                AND `status` = 0
+                AND user_status != 40
+                AND user_status != 50
+        ]]>
+    </sql>
+    <sql isRead="true" id="getAuditCount">
+        <![CDATA[
+          SELECT COUNT(*) FROM t_data_audit WHERE user_id = :userId AND `status` = '10'
+        ]]>
+    </sql>
+    <sql isRead="true" id="getUserByCompany">
+        <![CDATA[
+            SELECT * FROM wec_user WHERE company_id = :companyId
+        ]]>
+    </sql>
+    <sql id="importEntryUser">
+        <![CDATA[
+           INSERT INTO wec_user (
+				id,
+				company_id,
+				audit_status,
+				STATUS,
+				create_date,
+				update_date,
+				create_uid,
+				update_uid,
+				zhiwei_id,
+				gangwei_id,
+				user_name,
+				id_type,
+				pnid,
+				phone_prefix,
+				phone,
+				bank_id,
+				bank_name,
+				first_work_date,
+				expect_regular_date,
+				organ_id,
+				entry_date,
+				entry_shop_date,
+				work_type,
+				work_status,
+				trial_limit,
+				attend_status,
+				user_status,
+				shigang_status,
+				emp_no,
+				attend_card_no,
+				health_over_time,
+				kqj_card_no
+			) VALUES 
+			<#if userList?? && userList?size gt 0>
+                <#list userList as field>
+                    (
+                    '${field.id}',
+                    '${field.companyId}',
+                    '${field.auditStatus}',
+                    '${field.status}',
+                    '${(field.createDate)?string("yyyy-MM-dd HH:mm:ss")}',
+                    '${(field.updateDate)?string("yyyy-MM-dd HH:mm:ss")}',
+                    '${field.createUid}',
+                    '${field.updateUid}',
+                    '${field.zhiweiId}',
+                    '${field.gangweiId}',
+                    '${field.userName}',
+                    '${field.idType}',
+                    '${field.pnid}',
+                    '${field.phonePrefix}',
+                    '${field.phone}',
+                    <#if field.bankId??>
+						'${field.bankId}',
+						<#else>
+                        null,
+					</#if>
+                    <#if field.bankName??>
+						'${field.bankName}',
+						<#else>
+                        null,
+					</#if>
+					<#if field.firstWorkDate??>
+						'${(field.firstWorkDate)?string("yyyy-MM-dd")}',
+						<#else>
+                        null,
+					</#if>
+                    <#if field.expectRegularDate??>
+						'${(field.expectRegularDate)?string("yyyy-MM-dd")}',
+						<#else>
+                        null,
+					</#if>
+                    '${field.organId}',
+                    '${(field.entryDate)?string("yyyy-MM-dd")}',
+                     <#if field.entryShopDate??>
+						'${(field.entryShopDate)?string("yyyy-MM-dd")}',
+						<#else>
+                        null,
+					</#if>
+                    '${field.workType}',
+                    '${field.workStatus}',
+                    '${field.trialLimit}',
+                    '${field.attendStatus}',
+                    '${field.userStatus}',
+                    '${field.shigangStatus}',
+                    '${field.empNo}',
+                    '${field.attendCardNo}',
+                     <#if field.healthOverTime??>
+						'${(field.healthOverTime)?string("yyyy-MM-dd")}',
+						<#else>
+                        null,
+					</#if>
+                    '${field.kqjCardNo}'
+                    )
+                <#if field_has_next>,</#if>
+                </#list>
+            </#if>
+			
+        ]]>
+    </sql>
+    <sql id="importAccount">
+        <![CDATA[
+          INSERT INTO wec_account (
+				id,
+				company_id,
+				user_id,
+				login_id,
+				salt,
+				pwd,
+				account_name,
+				acc_type,
+				STATUS,
+				create_date,
+				update_date,
+				create_uid,
+				update_uid
+			) VALUES 
+			<#if accountList?? && accountList?size gt 0>
+                <#list accountList as field>
+                    (
+                    '${field.id}',
+                    '${field.companyId}',
+                    '${field.userId}',
+                    '${field.loginId}',
+                    '${field.salt}',
+                    '${field.pwd}',
+                    '${field.accountName}',
+                    '${field.accType}',
+                    '${field.status}',
+                    '${(field.createDate)?string("yyyy-MM-dd HH:mm:ss")}',
+                    '${(field.updateDate)?string("yyyy-MM-dd HH:mm:ss")}',
+                    '${field.createUid}',
+                    '${field.updateUid}'
+                    )
+                <#if field_has_next>,</#if>
+                </#list>
+            </#if>
+			
+        ]]>
+        </sql>
+        <sql id="importUserEntryInfo">
+        <![CDATA[
+          INSERT INTO t_emp_entry_info (
+				user_id,
+				data_type,
+				data_num,
+				data_over_time,
+				create_date,
+				create_uid
+			) VALUES 
+			<#if entryInfoList?? && entryInfoList?size gt 0>
+                <#list entryInfoList as field>
+                	(
+                    '${field.userId}',
+                    '1',
+                    '0',
+                     null,
+                    '${(field.createDate)?string("yyyy-MM-dd HH:mm:ss")}',
+                    '${field.createUid}'
+                    ),
+                    (
+                    '${field.userId}',
+                    '2',
+                    '0',
+                    null,
+                    '${(field.createDate)?string("yyyy-MM-dd HH:mm:ss")}',
+                    '${field.createUid}'
+                    ),
+                    (
+                    '${field.userId}',
+                    '3',
+                    '0',
+                    null,
+                    '${(field.createDate)?string("yyyy-MM-dd HH:mm:ss")}',
+                    '${field.createUid}'
+                    ),
+                    (
+                    '${field.userId}',
+                    '4',
+                    '0',
+                    '${(field.dataOverTime)?string("yyyy-MM-dd HH:mm:ss")}',
+                    '${(field.createDate)?string("yyyy-MM-dd HH:mm:ss")}',
+                    '${field.createUid}'
+                    ),
+                    (
+                    '${field.userId}',
+                    '5',
+                    '0',
+                    null,
+                    '${(field.createDate)?string("yyyy-MM-dd HH:mm:ss")}',
+                    '${field.createUid}'
+                    )
+                <#if field_has_next>,</#if>
+                </#list>
+            </#if>
+			
+        ]]>
+    </sql>
+    <sql id="importUserExt">
+        <![CDATA[
+         INSERT INTO wec_user_ext (
+			id,
+			solar_birthday,
+			gender,
+			residence_addr,
+			age,
+			lunar_birthday,
+			company_id,
+			birthday_type,
+			nation,
+			residence_type,
+			address,
+			edu_level,
+			major,
+			marry_status,
+			hurry_up_man,
+			hurry_relative,
+			hurry_up_phone,
+			create_date,
+			update_date,
+			create_uid,
+			update_uid
+			) VALUES 
+			<#if userExtList?? && userExtList?size gt 0>
+                <#list userExtList as field>
+                    (
+                    '${field.id}',
+                     <#if field.solarBirthday??>
+						'${field.solarBirthday}',
+						<#else>
+                        null,
+					</#if>
+                    <#if field.gender??>
+						'${field.gender}',
+						<#else>
+                        null,
+					</#if>
+                    <#if field.residenceAddr??>
+						'${field.residenceAddr}',
+						<#else>
+                        null,
+					</#if>
+                    <#if field.age??>
+						'${field.age}',
+						<#else>
+                        null,
+					</#if>
+					<#if field.lunarBirthday??>
+						'${field.lunarBirthday}',
+						<#else>
+                        null,
+					</#if>
+                    '${field.companyId}',
+                    '${field.birthdayType}',
+                    <#if field.nation??>
+						 '${field.nation}',
+						<#else>
+                        null,
+					</#if>
+					<#if field.residenceType??>
+						 '${field.residenceType}',
+						<#else>
+                        null,
+					</#if>
+                    '${field.address}',
+                     <#if field.eduLevel??>
+						 '${field.eduLevel}',
+						<#else>
+                        null,
+					</#if>
+                    '${field.major}',
+                     <#if field.marryStatus??>
+						'${field.marryStatus}',
+						<#else>
+                        null,
+					</#if>
+                    '${field.hurryUpMan}',
+                    '${field.hurryRelative}',
+                    '${field.hurryUpPhone}',
+                    '${(field.createDate)?string("yyyy-MM-dd HH:mm:ss")}',
+                    '${(field.updateDate)?string("yyyy-MM-dd HH:mm:ss")}',
+                    '${field.createUid}',
+                    '${field.updateUid}'
+                    )
+                <#if field_has_next>,</#if>
+                </#list>
+            </#if>
+			
+        ]]>
+    </sql>
+    <sql isRead="true" id="getUserSkillList">
+        <![CDATA[
+           SELECT
+				us.id,
+				us.skill_id skillId,
+				s.skill_name skillName,
+				us.skill_level_id skillLevelId,
+				sl.skill_level_name skillLevelName,
+				us.create_date createDate,
+				us.get_date getDate
+			FROM
+				t_user_skill_ref us
+			LEFT JOIN t_skill s ON us.skill_id = s.id
+			LEFT JOIN t_skill_level sl ON us.skill_level_id = sl.id
+			WHERE
+				us.user_id = :userId
+        ]]>
+    </sql>
+    	<sql id="listQueryByUserIds" isRead="true">
+        <![CDATA[
+       		select * from wec_user t where t.id in(:ids)
+        ]]>
+    </sql>
+
+    <!--查询用户姓名和ID-->
+    <sql id="findHsNameAndId" isRead="true">
+        <![CDATA[
+        SELECT
+        u.id id,
+        u.user_name name,
+        u.phone
+        FROM
+        wec_user u
+        where u.id in
+        (:idList)
+        ]]>
+    </sql>
+
+    <sql id="getUsersWithIds" isRead="true">
+        <![CDATA[
+           SELECT
+			u.id,
+			u.user_name userName,
+			o.organ_name organName,
+			u.organ_id organId,
+			g.gangwei_name gangweiName,
+			z.zhiwei_name zhiweiName,
+			u.emp_no empNo
+		FROM
+			wec_user u
+		LEFT JOIN t_organ o ON o.id = u.organ_id
+		LEFT JOIN t_gangwei g ON g.id = u.gangwei_id
+		LEFT JOIN t_zhiwei z ON z.id = u.zhiwei_id
+		WHERE u.id IN (:ids)
+		AND u.`status` != 3
+		AND u.user_status NOT IN ('40', '50')
+	]]>
+	</sql>
+	
+    <!--根据工号和公司查询员工-->
+    <sql id="findByEmpNoAndCompany" isRead="true">
+        <![CDATA[
+        SELECT
+        u.id id
+        FROM
+        wec_user u
+        where u.emp_no=:empNo and u.company_id=:companyId
+        ]]>
+    </sql>
+    
+    <sql id="getExtUserCountById" isRead="true">
+        <![CDATA[
+       SELECT
+			COUNT(*)
+		FROM
+			t_ext_wec_user
+		WHERE
+			uid = :uid
+		AND company_id = :companyId
+        ]]>
+    </sql>
+
+    <sql isRead="true" id="findUserIdsByAuthRole">
+        <![CDATA[
+            SELECT DISTINCT
+                id
+            FROM
+                wec_user
+            WHERE
+                company_id = :companyId
+                AND ( id IN (:ids) OR gangwei_id IN ( :ids) OR zhiwei_id IN (:ids ) )
+        ]]>
+    </sql>
+
+    <sql id="findAllUserForJob" isRead="true">
+        <![CDATA[
+            SELECT
+                u.id id,
+                u.company_id companyId,
+                u.gangwei_id gangweiId,
+                u.zhiwei_id zhiweiId,
+                u.organ_id organId,
+                o.organ_paths organIdPath
+            FROM
+                wec_user u
+                LEFT JOIN t_organ o ON u.organ_id = o.id
+                where o.status = 0 and u.status = 0
+                and u.user_status in (:userStatus)  and u.company_id = :companyId
+	       	     <#if orCount?? && orCount == 1>
+	       	        AND
+	           	     <#if userIds??  && userIds?size gt 0>
+                         u.id in (:userIds)
+                      </#if>
+                      <#if gangweiIds??  && gangweiIds?size gt 0>
+                         u.gangwei_id in (:gangweiIds)
+                      </#if>
+                      <#if zhiweiIds??  && zhiweiIds?size gt 0>
+                         u.zhiwei_id in (:zhiweiIds)
+                      </#if>
+                      <#if organIds??  && organIds?size gt 0>
+                         u.organ_id in (:organIds)
+                      </#if>
+	       	    </#if>
+	       	    <#if orCount?? && orCount gt 1>
+                    AND(
+                        <#if userIds??  && userIds?size gt 0>
+                            <#if userIdOr>
+                                 OR
+                              </#if>
+                             u.id in (:userIds)
+                          </#if>
+                          <#if gangweiIds??  && gangweiIds?size gt 0>
+                             <#if gangweiIdsOr>
+                                 OR
+                              </#if>
+                             u.gangwei_id in (:gangweiIds)
+                          </#if>
+                          <#if zhiweiIds??  && zhiweiIds?size gt 0>
+                            <#if zhiweiIdsOr>
+                                 OR
+                              </#if>
+                             u.zhiwei_id in (:zhiweiIds)
+                          </#if>
+                          <#if organIds??  && organIds?size gt 0>
+                            <#if organIdsOr>
+                                 OR
+                              </#if>
+                               u.organ_id in (:organIds)
+                          </#if>
+                         )
+	       	    </#if>
+        ]]>
+    </sql>
+
+    <sql isRead="true" id="getUserNumByCompanyIds">
+        <![CDATA[
+            SELECT
+                u.company_id companyId,
+                count(*) userNum
+            FROM
+                wec_user u
+            WHERE
+                u.status = 0
+                and u.user_status in (:userStatus)
+                and u.company_id in (:companyIds)
+                group by u.company_id
+        ]]>
+    </sql>
+
+    <sql isRead="true" id="getUserExtInfosByUserIds">
+        <![CDATA[
+            SELECT
+               *
+            FROM
+                wec_user u
+            WHERE
+                u.status = 0
+               and id in (:userIds)
+        ]]>
+    </sql>
+
+    <sql isRead="true" id="getUserIdByZhiweiZhiji">
+        <![CDATA[
+            SELECT
+                id
+            FROM
+                wec_user u
+            WHERE
+                u.`status` = 0
+				AND u.user_status NOT IN ('40', '50')
+                and u.company_id = :companyId
+                <#if zhiweis??  && zhiweis?size gt 0>
+                And 1 = 2
+                    <#list zhiweis as thisZhiwei>
+                       or ( u.zhiwei_id = '${thisZhiwei.id}'
+                       <#if thisZhiwei.zhijis??  && thisZhiwei.zhijis?size gt 0>
+                        AND 1 = 1
+                            <#list thisZhiwei.zhijis as thisZhiji>
+                               or (u.zhiji = '${thisZhiji}')
+                            </#list>
+                       </#if>
+                       )
+                     </#list>
+                </#if>
+        ]]>
+    </sql>
+    
+    <!--根据身份证号、手机号和公司查询员工-->
+    <sql id="findUserByCompanyIdAndPhoneAndPnid" isRead="true">
+        <![CDATA[
+        SELECT
+        *
+        FROM
+        wec_user u
+        where u.phone=:phone and u.company_id=:companyId and u.pnid=:pnid
+        ]]>
+    </sql>
+
+    <sql isRead="true" id="checkCorporationIsHaveUser">
+        <![CDATA[
+            SELECT
+                count(*)
+            FROM
+                wec_user u
+            WHERE
+                u.status in (0,2)
+            and
+                u.company_id = :companyId
+            and
+                u.corporation_id in (:corporationIds)
+        ]]>
+    </sql>
+
+    <sql isRead="true" id="findUserBank">
+        <![CDATA[
+            SELECT
+                u.id as userId,
+                u.user_name as userName,
+                u.bank_id as userBankCode
+            FROM
+                wec_user u
+            WHERE
+                u.corporation_bank_id = :corporationBankId
+            AND
+                u.corporation_id = :corporationId
+            AND
+                u.company_id = :companyId
+            AND
+                u.status in (0,2)
+            AND
+                u.bank_id is not null
+            AND
+                u.bank_id <> ''
+        ]]>
+    </sql>
+
+    <sql id="getUsersByIds" isRead="true">
+        <![CDATA[
+           SELECT
+			u.id,
+			u.user_name userName,
+			o.organ_name organName,
+			u.organ_id organId,
+			g.gangwei_name gangweiName,
+			z.zhiwei_name zhiweiName,
+			u.emp_no empNo,
+			u.entry_date entryDate,
+			u.entry_shop_date entryShopDate,
+			u.work_status workStatus
+		FROM
+			wec_user u
+		LEFT JOIN t_organ o ON o.id = u.organ_id
+		LEFT JOIN t_gangwei g ON g.id = u.gangwei_id
+		LEFT JOIN t_zhiwei z ON z.id = u.zhiwei_id
+		WHERE
+			u.company_id = :companyId
+		AND u.id IN (:ids)
+		AND u.`status` != 3
+		AND u.user_status NOT IN ('40', '50')
+	]]>
+    </sql>
+    <sql id="getUserListBelowZhiwei" isRead="true">
+        <![CDATA[
+		SELECT
+			g.id
+		FROM
+			t_gangwei g
+		LEFT JOIN t_zhiwei z ON g.zhiwei_id = z.id
+		WHERE z.id IN (:zhiweiIds)
+		AND g.`status` = 0
+		]]>
+    </sql>
+    <!-- approve-center拆分：原有基础没有过滤用户状态的信息，故这里也不作过滤 -->
+    <sql id="findUserIdsWithOrganIdsAndKeyword" isRead="true">
+        <![CDATA[
+            SELECT
+                u.id
+            FROM
+                wec_user u
+            WHERE u.company_id = :companyId
+                <#if organIds?? && organIds?size gt 0>
+                    AND u.organ_id IN (:organIds)
+                </#if>
+                <#if keyword?? && keyword?length gt 0>
+                    AND (u.user_name LIKE concat('%', :keyword, '%') OR u.emp_no LIKE concat('%', :keyword, '%'))
+                </#if>
+        ]]>
+    </sql>
+</sqlMap>

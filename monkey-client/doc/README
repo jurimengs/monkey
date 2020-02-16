@@ -1,0 +1,7 @@
+特点：
+高可用， 数据安全，节点同步高实时性
+
+monkey-db 负责数据的存储逻辑处理
+monkey-server 充当数据的接受端，并负责执行节点间数据备份
+monkey-netty 负责数据传输通道的逻辑实现
+monkey-client 负责面向开发，提供SDK
