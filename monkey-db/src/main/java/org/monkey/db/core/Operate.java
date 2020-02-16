@@ -1,7 +1,5 @@
 package org.monkey.db.core;
 
-import org.monkey.db.core.HashStore.EventType;
-
 public class Operate<T> {
     private T object;
     private EventType eventType;

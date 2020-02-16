@@ -202,6 +202,7 @@
         <xml-apis.version>1.4.01</xml-apis.version>
         <xml-maven-plugin.version>1.0.2</xml-maven-plugin.version>
         <xmlunit2.version>2.6.2</xmlunit2.version>
+        <netty-version>4.1.31.Final</netty-version>
     </properties>
 
     <dependencies>
@@ -411,11 +412,61 @@
             <!-- log end -->
             
             <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-bom</artifactId>
+                <version>${netty-version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            
+            
+            <dependency>
                 <groupId>com.memory</groupId>
                 <artifactId>monkey-db</artifactId>
                 <version>${monkey.version}</version>
             </dependency>
+            
+            <dependency>
+                <groupId>com.memory</groupId>
+                <artifactId>monkey-base</artifactId>
+                <version>${monkey.version}</version>
+            </dependency>
 
+
+            <!--Swagger -->
+            <dependency>
+                <groupId>io.springfox</groupId>
+                <artifactId>springfox-swagger2</artifactId>
+                <version>2.9.2</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>io.swagger</groupId>
+                        <artifactId>swagger-models</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>io.swagger</groupId>
+                <artifactId>swagger-models</artifactId>
+                <version>1.5.21</version>
+            </dependency>
+    
+            <dependency>
+                <groupId>io.swagger</groupId>
+                <artifactId>swagger-annotations</artifactId>
+                <version>1.5.21</version>
+            </dependency>
+            <dependency>
+                <groupId>io.springfox</groupId>
+                <artifactId>springfox-swagger-ui</artifactId>
+                <version>2.9.2</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.xiaoymin</groupId>
+                <artifactId>swagger-bootstrap-ui</artifactId>
+                <version>1.9.6</version>
+            </dependency>
+        
         </dependencies>
 
     </dependencyManagement>
@@ -465,5 +516,6 @@
         <module>monkey-db</module>
         <module>monkey-metrics</module>
         <module>monkey-server</module>
+        <module>monkey-base</module>
     </modules>
 </project>

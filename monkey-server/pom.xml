@@ -15,39 +15,26 @@
     </properties>
 
     <dependencies>
-    
         <!--Swagger -->
         <dependency>
             <groupId>io.springfox</groupId>
             <artifactId>springfox-swagger2</artifactId>
-            <version>2.9.2</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.swagger</groupId>
-                    <artifactId>swagger-models</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>io.swagger</groupId>
             <artifactId>swagger-models</artifactId>
-            <version>1.5.21</version>
         </dependency>
-
         <dependency>
             <groupId>io.swagger</groupId>
             <artifactId>swagger-annotations</artifactId>
-            <version>1.5.21</version>
         </dependency>
         <dependency>
             <groupId>io.springfox</groupId>
             <artifactId>springfox-swagger-ui</artifactId>
-            <version>2.9.2</version>
         </dependency>
         <dependency>
             <groupId>com.github.xiaoymin</groupId>
             <artifactId>swagger-bootstrap-ui</artifactId>
-            <version>1.9.6</version>
         </dependency>
         
         <dependency>
@@ -63,6 +50,50 @@
             <groupId>com.memory</groupId>
             <artifactId>monkey-db</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.memory</groupId>
+            <artifactId>monkey-base</artifactId>
+        </dependency>
+        
+        <!-- Netty -->
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-common</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-handler</artifactId>
+        </dependency>
+
+        <!-- End of Core Dependencies -->
+
+        <!-- OS-native transports -->
+<!--         <dependency> -->
+<!--             <groupId>io.netty</groupId> -->
+<!--             <artifactId>netty-transport-native-epoll</artifactId> -->
+<!--             <classifier>linux-x86_64</classifier> -->
+<!--             <optional>true</optional> -->
+<!--         </dependency> -->
+<!--         <dependency> -->
+<!--             <groupId>io.netty</groupId> -->
+<!--             <artifactId>netty-transport-native-kqueue</artifactId> -->
+<!--             <classifier>osx-x86_64</classifier> -->
+<!--             <optional>true</optional> -->
+<!--         </dependency> -->
+<!--         <dependency> -->
+<!--             <groupId>io.netty</groupId> -->
+<!--             <artifactId>netty-tcnative</artifactId> -->
+<!--             <version>1.1.33.Fork26</version> -->
+<!--             <classifier>${os.detected.classifier}</classifier> -->
+<!--             <optional>true</optional> -->
+<!--         </dependency> -->
+        
         
 <!--    个性化jar开始    -->
         <dependency>
