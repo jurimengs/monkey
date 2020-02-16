@@ -14,18 +14,17 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@SuppressWarnings("unchecked")
-public class MonkeyConnection<T> implements Connection<T> {
-    private final Store<String, T> store = StoreFactory.getInstance().createStore();
+public class MonkeyConnection implements Connection {
+    private final Store<String> store = StoreFactory.getInstance().createStore();
     private PrimaryFieldCache cache = PrimaryFieldCache.getInstance();
     
     @Override
-    public void update(T object) {
+    public void update(Object object) {
         if(object == null) {
             throw new RuntimeException("fooldb: null can not be updated");
         }
         // 首先要找到主键 Field
-        Class<T> clazz = (Class<T>) object.getClass();
+        Class<?> clazz = object.getClass();
         Field primaryKey = getPrimaryField(clazz);
         try {
             Object primaryKeyValue = primaryKey.get(object);
@@ -42,12 +41,12 @@ public class MonkeyConnection<T> implements Connection<T> {
     }
 
     @Override
-    public void save(T object) {
+    public void save(Object object) {
         if(object == null) {
             throw new RuntimeException("fooldb: null can not be saved");
         }
         // 首先要找到主键 Field
-        Class<T> clazz = (Class<T>) object.getClass();
+        Class<?> clazz = object.getClass();
         Field primaryKey = getPrimaryField(clazz);
         try {
             Object primaryKeyValue = primaryKey.get(object);
@@ -66,12 +65,12 @@ public class MonkeyConnection<T> implements Connection<T> {
     }
 
     @Override
-    public void delete(T object) {
+    public void delete(Object object) {
         if(object == null) {
             return;
         }
         // 首先要找到主键 Field
-        Class<T> clazz = (Class<T>) object.getClass();
+        Class<?> clazz = object.getClass();
         Field primaryKey = getPrimaryField(clazz);
         try {
             Object primaryKeyValue = primaryKey.get(object);
@@ -88,18 +87,18 @@ public class MonkeyConnection<T> implements Connection<T> {
     }
 
     @Override
-    public T select(T object) {
+    public Object select(Object object) {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public List<T> selectList(T object) {
+    public List<Object> selectList(Object object) {
         // TODO Auto-generated method stub
         return null;
     }
 
-    private Field getPrimaryField(Class<T> clazz) {
+    private Field getPrimaryField(Class<?> clazz) {
         Field fieldRes = cache.getField(clazz);
         if(fieldRes == null) {
             Field[] fields = clazz.getDeclaredFields();

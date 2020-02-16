@@ -1,5 +1,5 @@
 package org.monkey.db.core;
 
-public interface Executor<T> {
-    public void execute(Operate<T> poll);
+public interface Executor {
+    public void execute(Operate poll);
 }

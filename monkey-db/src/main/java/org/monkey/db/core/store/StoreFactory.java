@@ -7,8 +7,8 @@ public class StoreFactory {
         return sf;
     }
     
-    public <K, T> HashStore<K, T> createStore() {
-        HashStore<K, T> store = new HashStore<>();
+    public <K> HashStore<K> createStore() {
+        HashStore<K> store = new HashStore<>();
         return store;
     }
 }

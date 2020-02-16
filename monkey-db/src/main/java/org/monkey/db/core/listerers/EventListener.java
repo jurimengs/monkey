@@ -2,8 +2,8 @@ package org.monkey.db.core.listerers;
 
 import org.monkey.db.core.Operate;
 
-public interface EventListener<T> {
-    void addEvent(Operate<T> operate);
+public interface EventListener {
+    void addEvent(Operate operate);
     
     void run();
     

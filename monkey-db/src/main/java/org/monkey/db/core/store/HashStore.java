@@ -11,47 +11,47 @@ import org.monkey.db.core.listerers.NodeEventListener;
 
 import com.alibaba.fastjson.JSONArray;
 
-public class HashStore<K, T> implements Searcher<K, T> {
+public class HashStore<K> implements Searcher<K> {
     private final static int PERSIST_FIRST_TIMEAFTER = 4;
     // 持久化触发阈值 
     private final static int PERSIST_FREQUENCY = 5; 
     // 
     private final static int linkSize = 16;
-    private EventListener<T> eventListener;
+    private EventListener eventListener;
     
     @SuppressWarnings("unchecked")
-    private Link<K, T>[] nodeLinks = new Link[linkSize];
+    private Link<K>[] nodeLinks = new Link[linkSize];
     
     public HashStore() {
-        this(new OperateExecutor<>(), PERSIST_FIRST_TIMEAFTER, PERSIST_FREQUENCY);
+        this(new OperateExecutor(), PERSIST_FIRST_TIMEAFTER, PERSIST_FREQUENCY);
     }
     
-    public HashStore(Executor<T> executor) {
+    public HashStore(Executor executor) {
         this(executor, PERSIST_FIRST_TIMEAFTER, PERSIST_FREQUENCY);
     }
     
     public HashStore(int persistFirstTimeAfter, int persistFrequency) {
-        this(new OperateExecutor<>(), persistFirstTimeAfter, persistFrequency);
+        this(new OperateExecutor(), persistFirstTimeAfter, persistFrequency);
     }
     
-    public HashStore(Executor<T> executor, int persistFirstTimeAfter, int persistFrequency) {
+    public HashStore(Executor executor, int persistFirstTimeAfter, int persistFrequency) {
         for (int i = 0; i < nodeLinks.length; i++) {
             nodeLinks[i] = new Link<>(i);
         }
-        eventListener = new NodeEventListener<>(persistFirstTimeAfter, persistFrequency, executor);
+        eventListener = new NodeEventListener(persistFirstTimeAfter, persistFrequency, executor);
     }
     
     @Override
-    public void put(K key, T object) {
+    public void put(K key, Object object) {
         // get the link from links array
-        Link<K, T> link = getLink(key);
+        Link<K> link = getLink(key);
         
-        StoreNode<K, T> node = link.getNodeByKey(key);
+        StoreNode<K> node = link.getNodeByKey(key);
         
         if(node != null) {
             // 直接替换
             node.setKey(key);
-            node.setValue(object);
+            node.setObjectValue(object);
             addEvent(object, EventType.UPDATE);
         } else {
             // 如果没有的话， 则添加进去
@@ -61,20 +61,20 @@ public class HashStore<K, T> implements Searcher<K, T> {
     }
 
     @Override
-    public T get(K key) {
+    public Object get(K key) {
         // get the link from links array
-        Link<K, T> link = getLink(key);
-        StoreNode<K, T> node = link.getNodeByKey(key);
+        Link<K> link = getLink(key);
+        StoreNode<K> node = link.getNodeByKey(key);
         
         if(node == null) {
             return null;
         }
-        return node.getValue();
+        return node.getObjectValue();
     }
 
     @Override
     public void remove(K key) {
-        Link<K, T> link = getLink(key);
+        Link<K> link = getLink(key);
         link.remove(key);
     }
     
@@ -114,14 +114,14 @@ public class HashStore<K, T> implements Searcher<K, T> {
     }
     
     // 添加事件
-    private void addEvent(T object, EventType eventType) {
-        Operate<T> operate = new Operate<>();
+    private void addEvent(Object object, EventType eventType) {
+        Operate operate = new Operate();
         operate.setEventType(eventType);
         operate.setObject(object);
         eventListener.addEvent(operate);
     }
 
-    private Link<K, T> getLink(K key) {
+    private Link<K> getLink(K key) {
         // get hashCode first
         int hashCode = key.hashCode();
         // hash it for index of array

@@ -7,6 +7,6 @@ import org.monkey.db.core.store.Store;
  * @author jurimengs
  *
  */
-public interface Searcher<K, T> extends Store<K, T> {
+public interface Searcher<K> extends Store<K> {
     
 }

@@ -6,15 +6,15 @@ import java.util.List;
  * @author jurimengs
  *
  */
-public interface Connection<T> {
-    void update(T object);
+public interface Connection {
+    void update(Object object);
     
-    void save(T object);
+    void save(Object object);
     
-    void delete(T object);
+    void delete(Object object);
     
-    Object select(T object);
+    Object select(Object object);
     
-    List<T> selectList(T object);
+    List<Object> selectList(Object object);
     
 }

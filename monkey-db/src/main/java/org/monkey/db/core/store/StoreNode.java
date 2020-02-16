@@ -2,24 +2,24 @@ package org.monkey.db.core.store;
 
 import com.alibaba.fastjson.JSONObject;
 
-public class StoreNode<K, V> {
+public class StoreNode<K> {
     private int hashCode; // this hashCode is the code of "value"
-    private V value;
+    private Object value;
     private K key;
-    private StoreNode<K, V> next;
-    private StoreNode<K, V> prev;
+    private StoreNode<K> next;
+    private StoreNode<K> prev;
 
-    public StoreNode(K key, V value, StoreNode<K, V> next) {
+    public StoreNode(K key, Object value, StoreNode<K> next) {
         this.key = key;
         this.next = next;
-        setValue(value);
+        setObjectValue(value);
     }
 
-    public V getValue() {
+    public Object getObjectValue() {
         return value;
     }
 
-    public void setValue(V value) {
+    public void setObjectValue(Object value) {
         if(value != null) {
             this.hashCode = value.hashCode();
         }
@@ -45,19 +45,19 @@ public class StoreNode<K, V> {
         this.key = key;
     }
 
-    public StoreNode<K, V> getNext() {
+    public StoreNode<K> getNext() {
         return next;
     }
 
-    public void setNext(StoreNode<K, V> next) {
+    public void setNext(StoreNode<K> next) {
         this.next = next;
     }
 
-    public StoreNode<K, V> getPrev() {
+    public StoreNode<K> getPrev() {
         return prev;
     }
 
-    public void setPrev(StoreNode<K, V> prev) {
+    public void setPrev(StoreNode<K> prev) {
         this.prev = prev;
     }
 

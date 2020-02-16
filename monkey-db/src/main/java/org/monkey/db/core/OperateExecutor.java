@@ -8,12 +8,12 @@ import lombok.extern.slf4j.Slf4j;
  * this is an Executor for default Implement, you may treated it as an exmaple  
  * @author jurimengs
  *
- * @param <T>
+ * @param 
  */
 @Slf4j
-public class OperateExecutor<T> implements Executor<T> {
+public class OperateExecutor implements Executor {
     @Override
-    public void execute(Operate<T> poll) {
+    public void execute(Operate poll) {
 //        Test t = (Test) poll.getObject();
 //        log.info("id: {}", t.getId());
         log.info("poll: {}", JSON.toJSONString(poll));

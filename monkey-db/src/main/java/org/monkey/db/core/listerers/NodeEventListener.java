@@ -17,11 +17,11 @@ import lombok.extern.slf4j.Slf4j;
  * NodeEventListener hope 
  * @author jurimengs
  *
- * @param <T>
+ * @param 
  */
 @Slf4j
 @Setter
-public class NodeEventListener<T> implements EventListener<T> {
+public class NodeEventListener implements EventListener {
     
     /**
      * @param persistFirstTimeAfter timer will execute after ${persistFirstTimeAfter} seconds
@@ -35,7 +35,7 @@ public class NodeEventListener<T> implements EventListener<T> {
      * @param persistFirstTimeAfter timer will execute after ${persistFirstTimeAfter} seconds
      * @param persistFrequency timer execute per ${persistFrequency} times 
      */
-    public NodeEventListener(int persistFirstTimeAfter, int persistFrequency, Executor<T> executor) {
+    public NodeEventListener(int persistFirstTimeAfter, int persistFrequency, Executor executor) {
         this.persistFirstTimeAfter = persistFirstTimeAfter;
         this.persistFrequency = persistFrequency;
         this.executor = executor;
@@ -43,7 +43,7 @@ public class NodeEventListener<T> implements EventListener<T> {
     }
 
     @Override
-    public void addEvent(Operate<T> operate) {
+    public void addEvent(Operate operate) {
         synchronized (lock) {
             queue.add(operate);
         }
@@ -56,8 +56,8 @@ public class NodeEventListener<T> implements EventListener<T> {
         taskExecutor.scheduleAtFixedRate(new PersistTask(), persistFirstTimeAfter, persistFrequency, TimeUnit.SECONDS);
     }
     
-    private LinkedBlockingQueue<Operate<T>> getQueueCopy() {
-        LinkedBlockingQueue<Operate<T>> queueCopy = null;
+    private LinkedBlockingQueue<Operate> getQueueCopy() {
+        LinkedBlockingQueue<Operate> queueCopy = null;
         synchronized (lock) {
             queueCopy = queue;
             queue = new LinkedBlockingQueue<>();
@@ -69,10 +69,10 @@ public class NodeEventListener<T> implements EventListener<T> {
         @Override
         public void run() {
             log.debug("listening ... ");
-            LinkedBlockingQueue<Operate<T>> queueCopy = getQueueCopy();
+            LinkedBlockingQueue<Operate> queueCopy = getQueueCopy();
             log.info("task count to deal {}", queueCopy.size());
             
-            Operate<T> poll = null;
+            Operate poll = null;
             while ((poll = queueCopy.poll()) != null) {
                 executor.execute(poll);
             }
@@ -86,9 +86,9 @@ public class NodeEventListener<T> implements EventListener<T> {
     // 持久化触发阈值， 这个值要测试
     private int persistFrequency = 5; // 单位 秒 
     //
-    private Executor<T> executor;
+    private Executor executor;
     // 
-    private LinkedBlockingQueue<Operate<T>> queue = new LinkedBlockingQueue<>();
+    private LinkedBlockingQueue<Operate> queue = new LinkedBlockingQueue<>();
     // 单线程执行
     private ScheduledExecutorService taskExecutor = Executors.newSingleThreadScheduledExecutor();
 }

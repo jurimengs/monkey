@@ -2,12 +2,12 @@ package org.monkey.db.core.store;
 
 import com.alibaba.fastjson.JSONArray;
 
-public class Link<K, T> {
+public class Link<K> {
     private byte[] lock = new byte[1];
     private int size;
     private int hash; // 对应到数组的下标, 一条链上的所有 hash 值都是一样的
-    private StoreNode<K, T> last;
-    private StoreNode<K, T> first;
+    private StoreNode<K> last;
+    private StoreNode<K> first;
 
     public Link(int hash) {
         this.hash = hash;
@@ -20,9 +20,9 @@ public class Link<K, T> {
     /**
      * 线程不安全的
      */
-    public void add(K key, T newValue) {
+    public void add(K key, Object newValue) {
         // System.out.println("this:" + JSON.toJSONString(this));
-        StoreNode<K, T> next = new StoreNode<>(key, newValue, null);
+        StoreNode<K> next = new StoreNode<>(key, newValue, null);
         synchronized (lock) {
             // 用内部对象锁，可以在保证增量变化安全的前提下，避免对对象的其他方法造成影响 
             if (this.last == null) {
@@ -39,8 +39,8 @@ public class Link<K, T> {
         }
     }
 
-    public StoreNode<K, T> getNodeByKey(K key) {
-        StoreNode<K, T> node = this.getFirst();
+    public StoreNode<K> getNodeByKey(K key) {
+        StoreNode<K> node = this.getFirst();
         while (node != null && !node.getKey().equals(key)) {
             // 直到找到 key 不相同的 node 
             node = node.getNext();
@@ -49,15 +49,15 @@ public class Link<K, T> {
     }
 
     public void remove(K key) {
-        StoreNode<K, T> node = getNodeByKey(key);
+        StoreNode<K> node = getNodeByKey(key);
         if(node != null) {
             synchronized (lock) {
                 // 如果有 next, 则取next
                 // 如果没有 next, 表示它自己就是最后一个
                 // 如果有 prev， 则取 prev， 
                 // 如果没有 prev， 则表示它自己就是第一个
-                StoreNode<K, T> prev = node.getPrev();
-                StoreNode<K, T> next = node.getNext();
+                StoreNode<K> prev = node.getPrev();
+                StoreNode<K> next = node.getNext();
                 if(prev != null) {
                     if(next != null) {
                         // 前不为空后不为空， 就将其接起来， first 、 last 都不动
@@ -88,7 +88,7 @@ public class Link<K, T> {
     
     public JSONArray toJSONArray() {
         JSONArray tmp = new JSONArray();
-        StoreNode<K, T> tmpNode = this.first;
+        StoreNode<K> tmpNode = this.first;
         if (tmpNode != null) {
             tmp.add(tmpNode.toJSON());
             while((tmpNode = tmpNode.getNext()) != null) {
@@ -98,19 +98,19 @@ public class Link<K, T> {
         return tmp;
     }
 
-    public StoreNode<K, T> getLast() {
+    public StoreNode<K> getLast() {
         return last;
     }
 
-    public void setLast(StoreNode<K, T> last) {
+    public void setLast(StoreNode<K> last) {
         this.last = last;
     }
 
-    public StoreNode<K, T> getFirst() {
+    public StoreNode<K> getFirst() {
         return first;
     }
 
-    public void setFirst(StoreNode<K, T> first) {
+    public void setFirst(StoreNode<K> first) {
         this.first = first;
     }
 
