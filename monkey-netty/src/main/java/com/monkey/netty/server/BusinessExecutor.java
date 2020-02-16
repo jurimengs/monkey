@@ -12,7 +12,6 @@ import com.monkey.exceptions.BusinessInvokeException;
 import com.monkey.exceptions.TellUserMessageException;
 import com.monkey.netty.client.RpcRequest;
 
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -21,7 +20,6 @@ import lombok.extern.slf4j.Slf4j;
  *
  */
 @Slf4j
-@Setter
 public class BusinessExecutor {
     private BeanFactory beanFactory;
     private Map<String, Method> methodCache = new ConcurrentHashMap<>();
@@ -39,8 +37,7 @@ public class BusinessExecutor {
         try {
             Object[] toExecuteMethodArgs = request.getArgs();
             
-            Object bean = beanFactory.getBean(request.getBeanClass());
-//            Object bean = beanFactory.getBean(beanName);
+            Object bean = beanFactory.getBean(request.getBeanName());
             
             Class<?> [] parameterTypes = request.getParameterTypes();
             
@@ -71,4 +68,8 @@ public class BusinessExecutor {
         return method;
     }
 
+    public void setBeanFactory(BeanFactory beanFactory) {
+        this.beanFactory = beanFactory;
+    }
+    
 }

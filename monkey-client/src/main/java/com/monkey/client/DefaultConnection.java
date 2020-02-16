@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.stereotype.Component;
 
 import com.monkey.constants.CommonConstants;
 import com.monkey.netty.client.ClientHandler;
@@ -18,7 +18,7 @@ import io.netty.channel.ChannelFuture;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@ConditionalOnBean(NettyClient.class)
+@Component
 public class DefaultConnection implements Connection {
     @Autowired
     private NettyClient nettyClient;

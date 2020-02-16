@@ -57,4 +57,5 @@ public class NettyServer implements InitializingBean {
     public void afterPropertiesSet() throws Exception {
         bind();
     }
+
 }

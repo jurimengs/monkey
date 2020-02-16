@@ -1,4 +1,4 @@
-package com.org.test;
+package com.org.test.controller;
 
 import org.monkey.db.face.annotation.Id;
 

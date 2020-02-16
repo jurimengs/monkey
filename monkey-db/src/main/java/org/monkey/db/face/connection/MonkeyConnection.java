@@ -8,12 +8,14 @@ import org.monkey.db.core.store.Store;
 import org.monkey.db.core.store.StoreFactory;
 import org.monkey.db.exception.BeanException;
 import org.monkey.db.face.annotation.Id;
+import org.springframework.stereotype.Component;
 
 import com.baomidou.mybatisplus.annotation.TableId;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Component("connection")
 public class MonkeyConnection implements Connection {
     private final Store<String> store = StoreFactory.getInstance().createStore();
     private PrimaryFieldCache cache = PrimaryFieldCache.getInstance();
