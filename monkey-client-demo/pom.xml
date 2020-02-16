@@ -7,7 +7,7 @@
         <version>0.0.1</version>
     </parent>
 
-    <artifactId>monkey-client</artifactId>
+    <artifactId>monkey-client-demo</artifactId>
     <packaging>jar</packaging>
 
     <properties>
@@ -15,14 +15,32 @@
     </properties>
 
     <dependencies>
+        <!--Swagger -->
         <dependency>
-            <groupId>com.memory</groupId>
-            <artifactId>monkey-netty</artifactId>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger2</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.swagger</groupId>
+            <artifactId>swagger-models</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.swagger</groupId>
+            <artifactId>swagger-annotations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger-ui</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.github.xiaoymin</groupId>
+            <artifactId>swagger-bootstrap-ui</artifactId>
         </dependency>
         <dependency>
             <groupId>com.memory</groupId>
-            <artifactId>monkey-base</artifactId>
+            <artifactId>monkey-client</artifactId>
         </dependency>
+        
         
 <!--    个性化jar开始    -->
         <dependency>

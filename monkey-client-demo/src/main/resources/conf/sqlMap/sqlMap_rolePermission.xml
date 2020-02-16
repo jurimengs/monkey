@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<sqlMap namespace="RolePermission">
+    <sql id="findAll" isRead="true">
+        <![CDATA[
+            SELECT rp.company_id, rp.id, rp.permission_id, rp.role_id, pf.auth_flag from wec_role_permission rp join wec_permission_function pf 
+            on rp.permission_id = pf.id
+            <#if roleId?? && roleId?length gt 0>
+                AND rp.role_id = :roleId
+            </#if>
+            
+			union 
+			SELECT rp.company_id, rp.id, rp.permission_id, rp.role_id, pf.auth_flag from wec_role_permission rp join wec_permission_field pf 
+            on rp.permission_id = pf.id
+            <#if roleId?? && roleId?length gt 0>
+                AND rp.role_id = :roleId
+            </#if>
+            
+        ]]>
+    </sql>
+    <sql id="findRolePermissionByPermissionId" isRead="true">
+        <![CDATA[
+            SELECT rp.company_id, rp.id, rp.permission_id, rp.role_id, pf.auth_flag 
+                from wec_role_permission rp join wec_permission_function pf on rp.permission_id = pf.id where pf.id = :permissionId and rp.role_id= :roleId
+			union 
+			SELECT rp.company_id, rp.id, rp.permission_id, rp.role_id, pf.auth_flag 
+			     from wec_role_permission rp join wec_permission_field pf on rp.permission_id = pf.id where pf.id = :permissionId and rp.role_id= :roleId
+        ]]>
+    </sql>
+    <sql id="findByUniqueKey" isRead="true">
+        <![CDATA[
+            SELECT id, company_id, role_id, permission_id FROM wec_role_permission where company_id=:companyId 
+            and role_id = :roleId and permission_id = :permissionId
+        ]]>
+    </sql>
+    <sql id="findEntitysByRoleId" isRead="true">
+        <![CDATA[
+            select rp.id, rp.company_id, rp.role_id, rp.permission_id from wec_role_permission rp 
+            where company_id=:companyId AND rp.role_id = :roleId
+        ]]>
+    </sql>
+    
+    <sql id="findListByRoleIdsAndPermissionId" isRead="true">
+        <![CDATA[
+            select ar.* from wec_auth_role ar
+            left join wec_role_permission rp on ar.role_id = rp.role_id
+            where 
+            rp.permission_id = :permissionId
+            AND ar.company_id = :companyId
+            AND ar.obj_id in (
+                :userId, 
+                :gangweiId
+                <#if zhiweiId?? && zhiweiId?length gt 0>
+                , :zhiweiId
+                </#if>
+            )
+            <#if roleIdList?? && roleIdList?size gt 0>
+                AND rp.role_id in  (
+                    <#list roleIds as id>
+                        '${id}'
+                        <#if id_has_next>,</#if>
+                    </#list>
+                )
+            </#if>
+        ]]>
+    </sql>
+    
+    
+    <sql id="deleteRolePermission">
+        <![CDATA[
+        delete from wec_role_permission
+            where company_id = :companyId
+            <#if ids?? && ids?size gt 0>
+                AND permission_id in  (:ids)
+            </#if>
+            <#if roleId?? && roleId?length gt 0>
+                AND role_id = :roleId
+            </#if>
+        ]]>
+    </sql>
+</sqlMap>

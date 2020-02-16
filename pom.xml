@@ -436,6 +436,11 @@
                 <artifactId>monkey-netty</artifactId>
                 <version>${monkey.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.memory</groupId>
+                <artifactId>monkey-client</artifactId>
+                <version>${monkey.version}</version>
+            </dependency>
 
 
             <!--Swagger -->
@@ -524,5 +529,6 @@
         <module>monkey-server</module>
         <module>monkey-base</module>
         <module>monkey-netty</module>
+        <module>monkey-client-demo</module>
     </modules>
 </project>

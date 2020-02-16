@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<sqlMap namespace="EmpSalary">
+
+    <sql id="getIdByUserId" isRead="true">
+        <![CDATA[
+		SELECT
+		   id
+		FROM
+		   t_emp_salary
+		WHERE
+		   user_id= :userId
+		AND  company_id = :companyId
+		]]>
+    </sql>
+
+</sqlMap>

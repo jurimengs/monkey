@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<sqlMap namespace="HouqinRuzhu">
+    <sql id="findByParam" isRead="true">
+        <![CDATA[
+			SELECT
+                t.id,
+                w.user_name userName,
+                w.id userId,
+                w.emp_no empNo,
+                tor.id organId,
+                tor.organ_name organName,
+                t.`status`,
+                DATE_FORMAT(t.begin_date, '%Y-%m-%d') beginDate,
+                DATE_FORMAT(t.end_date, '%Y-%m-%d') endDate,
+                ths.`name`,
+                thsf.room_name roomName,
+                thc.chuangwei_name chuangweiName,
+                ww.user_name updateUserName,
+                t.update_date updateDate,
+                ths.address
+            FROM
+                t_houqin_sushe_ruzhu_record t
+            LEFT JOIN t_houqin_chuangwei thc ON t.chuangwei_id = thc.id
+            LEFT JOIN t_houqin_sushe_fangjian thsf ON thsf.id = thc.fangjian_id
+            LEFT JOIN t_houqin_sushe ths ON ths.id = thsf.sushe_id
+            LEFT JOIN wec_user w ON t.user_id = w.id
+            left join wec_user ww on ww.id=t.update_uid
+            LEFT JOIN t_organ tor ON tor.id = w.organ_id
+            where t.company_id=:companyId
+             <#if tabId?? && tabId?length gt 0>
+                 <#if tabId == '2'>
+                            and t.status=0 and w.user_status NOT IN (40, 50)
+                 </#if>
+                 <#if tabId == '4'>
+                            and t.status=5
+                 </#if>
+             </#if>
+
+         <#if organPaths?? && organPaths?length gt 0>
+                    AND tor.organ_paths like CONCAT (:organPaths,'%')
+         </#if>
+         <#if userId?? && userId?length gt 0>
+                    AND t.user_id =:userId
+         </#if>
+         <#if susheName?? && susheName?length gt 0>
+                    and ths.name like concat('%',:susheName,'%')
+         </#if>
+         <#if beginDate?? && beginDate?length gt 0>
+                    AND t.begin_date = :beginDate
+         </#if>
+            <#if dataRange??  && dataRange?length gt 0>
+                ${dataRange}
+            </#if>
+         <#if keyword?? && keyword?length gt 0>
+                    and w.user_name like concat('%',:keyword,'%')
+         </#if>
+		]]>
+    </sql>
+
+    <sql id="queryCount" isRead="true">
+        <![CDATA[
+        SELECT
+        count(1) totalRuzhuCount,
+        ifnull(
+        sum(IF(t.`status` = 5, 1, 0)),
+        0
+        ) alreadyTuifangCount,
+        ifnull(
+        sum(
+
+        IF (
+        t.`status` = 0
+        AND w.user_status NOT IN (40, 50),
+        1,
+        0
+        )
+        ),
+        0
+        ) alreadyRuzhuCount,
+        (
+        SELECT
+        count(DISTINCT w.id) notRuzhuCount
+        FROM
+        wec_user w
+        LEFT JOIN (SELECT
+        t.user_id
+        FROM
+        t_houqin_sushe_ruzhu_record t
+        WHERE
+        t.end_date IS NULL and t.company_id=:companyId
+        GROUP BY
+        t.user_id) tt on tt.user_id=w.id
+        LEFT JOIN t_organ tor ON tor.id = w.organ_id
+        LEFT JOIN t_gangwei tg ON tg.id = w.gangwei_id
+        WHERE w.user_status NOT IN (40, 50)
+        and w.company_id=:companyId
+        and tt.user_id is null
+         <#if organPaths?? && organPaths?length gt 0>
+                    AND tor.organ_paths like CONCAT (:organPaths,'%')
+         </#if>
+          <#if dataRange??  && dataRange?length gt 0>
+              ${dataRange}
+          </#if>
+         <#if keyword?? && keyword?length gt 0>
+                    and
+                    (w.user_name like concat('%', :keyword, '%')
+                        OR tor.organ_name like concat('%', :keyword, '%')
+                        OR w.emp_no like concat('%', :keyword, '%')
+                        )
+         </#if>
+        ) notRuzhuCount
+        FROM
+        t_houqin_sushe_ruzhu_record t
+        LEFT JOIN wec_user w ON t.user_id = w.id
+        LEFT JOIN t_organ tor ON tor.id = w.organ_id
+        LEFT JOIN t_houqin_chuangwei thc ON t.chuangwei_id = thc.id
+        LEFT JOIN t_houqin_sushe_fangjian thsf ON thsf.id = thc.fangjian_id
+        LEFT JOIN t_houqin_sushe ths ON ths.id = thsf.sushe_id
+        where t.company_id=:companyId
+         <#if organPaths?? && organPaths?length gt 0>
+                    AND tor.organ_paths like CONCAT (:organPaths,'%')
+         </#if>
+          <#if dataRange??  && dataRange?length gt 0>
+                ${dataRange}
+          </#if>
+         <#if keyword?? && keyword?length gt 0>
+                     and
+                    (w.user_name like concat('%', :keyword, '%')
+                        OR tor.organ_name like concat('%', :keyword, '%')
+                        OR w.emp_no like concat('%', :keyword, '%')
+                        )
+         </#if>
+         <#if userId?? && userId?length gt 0>
+                    AND t.user_id =:userId
+         </#if>
+         <#if susheName?? && susheName?length gt 0>
+                    AND ths.name like concat('%', :susheName, '%')
+         </#if>
+         <#if beginDate?? && beginDate?length gt 0>
+                  AND date_format(t.begin_date, '%Y-%m-%d')  = :beginDate
+         </#if>
+		]]>
+    </sql>
+
+
+    <sql id="queryById" isRead="true">
+        <![CDATA[
+			SELECT
+                t.id,
+                w.user_name userName,
+                w.id userId,
+                w.emp_no empNo,
+                tor.organ_name organName,
+                t.`status`,
+                 DATE_FORMAT(t.begin_date, '%Y-%m-%d') beginDate,
+                 DATE_FORMAT(t.end_date, '%Y-%m-%d') endDate,
+                ths.`name`,
+                thsf.room_name roomName,
+                thc.chuangwei_name chuangweiName,
+                ths.address,
+                t.remark,
+                tg.gangwei_name gangweiName,
+				thc.id chuangweiId,
+				thsf.id fangjianId,
+                ths.id susheId
+            FROM
+                t_houqin_sushe_ruzhu_record t
+            LEFT JOIN t_houqin_chuangwei thc ON t.chuangwei_id = thc.id
+            LEFT JOIN t_houqin_sushe_fangjian thsf ON thsf.id = thc.fangjian_id
+            LEFT JOIN t_houqin_sushe ths ON ths.id = thsf.sushe_id
+            LEFT JOIN wec_user w ON t.user_id = w.id
+            LEFT JOIN t_organ tor ON tor.id = w.organ_id
+            left join t_gangwei tg on w.gangwei_id=tg.id
+            where t.id=:id
+
+		]]>
+    </sql>
+
+    <!--未入住人员查询-->
+    <sql id="queryNotRuzhuUser" isRead="true">
+        <![CDATA[
+			SELECT
+                w.id userId,
+                w.entry_date entryDate,
+                w.user_name userName,
+                w.emp_no empNo,
+                w.organ_id organId,
+                tor.organ_name organName,
+                tg.gangwei_name gangweiName,
+                1 AS 'status'
+            FROM
+                wec_user w
+            LEFT JOIN (SELECT
+        t.user_id
+        FROM
+        t_houqin_sushe_ruzhu_record t
+        WHERE
+        t.end_date IS NULL and t.company_id=:companyId
+        GROUP BY
+        t.user_id) tt on tt.user_id=w.id
+            LEFT JOIN t_organ tor ON tor.id = w.organ_id
+            LEFT JOIN t_gangwei tg ON tg.id = w.gangwei_id
+            WHERE
+                  w.user_status NOT IN (40, 50)
+            and tt.user_id is null
+            AND w.company_id =:companyId
+         <#if organPaths?? && organPaths?length gt 0>
+                    AND tor.organ_paths like CONCAT (:organPaths,'%')
+         </#if>
+            <#if dataRange??  && dataRange?length gt 0>
+                ${dataRange}
+            </#if>
+         <#if keyword?? && keyword?length gt 0>
+                    and w.user_name like concat('%',:keyword,'%')
+         </#if>
+        group by w.id
+
+		]]>
+    </sql>
+
+
+    <!--查询某个人的入住记录-->
+    <sql id="queryUserRuzhuList" isRead="true">
+        <![CDATA[
+            SELECT
+            t.id,
+            t.status,
+            DATE_FORMAT(t.begin_date,'%Y-%m-%d') beginDate,
+            ths.`name` 'name',
+            thsf.room_name fangjianName,
+            thc.chuangwei_name chuangweiName,
+            DATE_FORMAT(t.end_date,'%Y-%m-%d') endDate
+            FROM
+            t_houqin_sushe_ruzhu_record t
+            LEFT JOIN t_houqin_chuangwei thc ON t.chuangwei_id = thc.id
+            LEFT JOIN t_houqin_sushe_fangjian thsf ON thsf.id = t.fangjian_id
+            LEFT JOIN t_houqin_sushe ths ON ths.id = thsf.sushe_id
+            WHERE
+            t.user_id =:userId
+            order by t.begin_date desc
+        ]]>
+    </sql>
+
+
+    <!--查询某个时间段内的入住记录-->
+    <sql id="queryRecordByDate" isRead="true">
+        <![CDATA[
+        SELECT
+        *
+        FROM
+        t_houqin_sushe_ruzhu_record t
+        WHERE t.company_id=:companyId
+        AND t.`sushe_id` IS NOT NULL
+        AND (
+        (
+        t.begin_date <=:beginDate
+        AND (
+        t.end_date IS NULL
+        OR t.end_date >=:beginDate
+        )
+        )
+        OR (
+        t.begin_date >=:beginDate
+        AND t.begin_date <=:endDate
+        )
+        )
+        ]]>
+    </sql>
+
+    <sql id="getAssignUserPage" isRead="true">
+        <![CDATA[
+        SELECT
+        w.id,
+        w.emp_no empNo,
+        w.user_name userName,
+        w.organ_id organId,
+        tg.gangwei_name gangweiName
+        FROM
+        t_houqin_sushe t
+        LEFT JOIN t_houqin_sushe_range thsr ON t.id = thsr.sushe_id
+        LEFT JOIN t_organ tor ON tor.id = thsr.organ_id
+        LEFT JOIN wec_user w ON w.organ_id = tor.id
+        LEFT JOIN t_gangwei tg ON tg.id = w.gangwei_id
+        LEFT JOIN (
+        SELECT
+        t.user_id
+        FROM
+        t_houqin_sushe_ruzhu_record t
+        WHERE
+        t.end_date IS NULL
+        AND t.company_id =:companyId
+        GROUP BY
+        t.user_id
+        ) tt ON tt.user_id = w.id
+        WHERE
+        t.id =:susheId
+        AND w. STATUS = '0'
+        AND w.user_status IN ('10', '20', '30', '60')
+        AND tt.user_id IS NULL
+        AND w.id IS NOT NULL
+        <#if path??  && path?length gt 0>
+           AND tor.organ_paths like concat(:path,'%')
+        </#if>
+       	 <#if key??  && key?length gt 0>
+           AND (
+                  tor.organ_name LIKE CONCAT('%', :key, '%')
+                  OR w.user_name LIKE CONCAT('%', :key, '%')
+                  or w.emp_no like concat('%',:key,'%')
+                  )
+         </#if>
+    ${dataRange}
+        GROUP BY
+        w.id
+        ]]>
+    </sql>
+
+
+</sqlMap>

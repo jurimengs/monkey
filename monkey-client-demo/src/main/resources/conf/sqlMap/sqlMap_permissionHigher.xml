@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<sqlMap namespace="PermissionHigher">
+	<!-- 通过email查找用户 -->
+	<sql id="findEntityListByRoleId" isRead="true">
+		<![CDATA[
+		SELECT ph.id, ph.company_id, ph.create_date, ph.create_uid, ph.update_date, ph.update_uid
+		    FROM wec_role_permission rp 
+			left join wec_permission_higher ph on rp.permission_id = ph.id
+			where rp.company_id = :companyId and ph.id <> ''
+			
+			<#if roleIdList?? && roleIdList?size gt 0>
+				AND rp.role_id in  (
+					<#list roleIdList as id>
+						'${id}'
+						<#if id_has_next>,</#if>
+					</#list>
+				)
+			</#if>
+		]]>
+	</sql>
+</sqlMap>

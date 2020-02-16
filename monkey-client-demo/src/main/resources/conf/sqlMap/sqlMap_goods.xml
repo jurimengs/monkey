@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<sqlMap namespace="Goods">
+
+
+    <!--查询编码最大值-->
+    <sql id="queryMaxCode" isRead="true">
+        <![CDATA[
+        SELECT
+        max(t.goods_no)
+        FROM
+        t_company_goods t
+        where t.company_id=:companyId
+        ]]>
+    </sql>
+
+    <!--批量新增-->
+    <sql id="batchAdd">
+        <![CDATA[
+        INSERT INTO t_company_goods (
+        id,
+        company_id,
+        status,
+        goods_no,
+        goods_name,
+        yajin,
+        price,
+        goods_type,
+        need_return,
+        sunhao_count,
+        lingyong_count,
+        unused_count,
+        total_count,
+        remark,
+        create_date,
+        create_uid
+        ) values
+        <#list goodsList as goods>
+                        (
+                        '${goods.id}',
+                        '${goods.companyId}',
+                        '${goods.status}',
+                        '${goods.goodsNo}',
+                        '${goods.goodsName}',
+                        '${goods.yajin}',
+                        '${goods.price}',
+                        '${goods.goodsType}',
+                        '${goods.needReturn}',
+                        '${goods.sunhaoCount}',
+                        '${goods.lingyongCount}',
+                        '${goods.unusedCount}',
+                        '${goods.totalCount}',
+                        '${goods.remark}',
+                        '${goods.createDate?string("yyyy-MM-dd HH:mm:ss")}',
+                        '${goods.createUid}'
+                        )
+            <#if goods_has_next>,</#if>
+        </#list>
+        ]]>
+    </sql>
+
+    <!--查询数量-->
+    <sql id="queryCount" isRead="true">
+        <![CDATA[
+        select
+        count(1) totalCount,
+        ifnull(
+        sum(IF(tt.need_return = 0, 1, 0)),
+        0
+        ) needReturnCount,
+        ifnull(
+        sum(IF(tt.need_return = 1, 1, 0)),
+        0
+        ) notNeedReturnCount,
+        ifnull(
+        sum(
+        IF (
+        tt.total_count * 0.2 > tt.unused_count,
+        1,
+        0
+        )
+        ),
+        0
+        ) notEnoughCount
+        from t_company_goods tt where tt.id in(
+        SELECT
+        t.id
+        FROM
+        t_company_goods t
+        LEFT JOIN t_company_goods_range tcgr ON t.id = tcgr.goods_id
+        LEFT JOIN t_organ o ON o.id = tcgr.organ_id
+        where t.company_id=:companyId
+        and t.status=0
+             <#if keyword?? && keyword?length gt 0>
+                    and t.goods_name like concat('%',:keyword,'%')
+             </#if>
+            <#if organPaths?? && organPaths?length gt 0>
+                    AND o.organ_paths like CONCAT (:organPaths,'%')
+            </#if>
+            <#if dataRange??  && dataRange?length gt 0>
+                ${dataRange}
+            </#if>
+            <#if functions??  && functions?size gt 0>
+                    and (
+                <#list functions as thisfunc>
+                    <#if thisfunc??  && thisfunc?size gt 0>
+                            (
+                        <#list thisfunc as selffunc>
+                            ${selffunc.sqlStr}
+                            <#if selffunc.funcType??  && selffunc.funcType?length gt 0>
+                                <#if selffunc.funcType = 0>
+                                                <
+                                </#if>
+                                <#if selffunc.funcType = 1>
+                                                =
+                                </#if>
+                                <#if selffunc.funcType = 2>
+                                                >
+                                </#if>
+                            <#else>
+                                         like
+                            </#if>
+                                    '${selffunc.funcValue}'
+                            <#if selffunc_has_next> and</#if>
+                        </#list>
+                            )
+                        <#if thisfunc_has_next> or </#if>
+                    </#if>
+                </#list>
+                )
+            </#if>
+        group by t.id)
+        ]]>
+    </sql>
+
+    <!--查询详情-->
+    <sql id="queryById" isRead="true">
+        <![CDATA[
+        SELECT
+        t.id,
+        t.goods_no goodsNo,
+        t.goods_name goodsName,
+        t.price,
+        t.yajin,
+        t.goods_type goodsType,
+        t.need_return needReturn,
+        t.total_count totalCount,
+        t.sunhao_count sunhaoCount,
+        t.lingyong_count lingyongCount,
+        t.unused_count unusedCount,
+        t.organ_ids organIds,
+        t.remark
+        FROM
+        t_company_goods t
+        WHERE
+        t.company_id =:companyId
+        AND t.id =:id
+        ]]>
+    </sql>
+
+
+    <!--分页查询-->
+    <sql id="pageQuery" isRead="true">
+        <![CDATA[
+        SELECT
+        t.id,
+        t.goods_no goodsNo,
+        t.goods_name goodsName,
+        t.total_count totalCount,
+        t.lingyong_count lingyongCount,
+        t.sunhao_count sunhaoCount,
+        t.unused_count unusedCount,
+        t.organ_ids organIds,
+        t.need_return needReturn,
+        t.remark,
+        t.goods_type goodsType,
+        t.price,
+        t.`status`,
+        t.yajin,
+        w.user_name updateUserName,
+        t.update_date updateDate,
+        GROUP_CONCAT(DISTINCT o.organ_name) organNames
+            <#if selfFields??  && selfFields?size gt 0>
+				,
+                <#list selfFields as selfField>
+           		 	ext.${selfField}
+                    <#if selfField_has_next>,</#if>
+                </#list>
+            </#if>
+        FROM
+        t_company_goods t
+        LEFT JOIN t_company_goods_range tcgr ON tcgr.goods_id = t.id
+        LEFT JOIN t_organ o ON o.id = tcgr.organ_id
+        left join wec_user w on w.id=t.update_uid
+        where t.company_id=:companyId
+        and t.status=0
+        <#if keyword?? && keyword?length gt 0>
+				and t.goods_name like concat('%',:keyword,'%')
+        </#if>
+        <#if organPaths?? && organPaths?length gt 0>
+				AND o.organ_paths like CONCAT (:organPaths,'%')
+        </#if>
+		<#if dataRange??  && dataRange?length gt 0>
+            ${dataRange}
+        </#if>
+        <#if tabId?? && tabId?length gt 0>
+            <#if tabId == 'needReturnCount'>
+					and t.need_return=0
+            </#if>
+            <#if tabId == 'notNeedReturnCount'>
+                    and t.need_return=1
+            </#if>
+            <#if tabId == 'notEnoughCount'>
+                    and t.total_count * 0.2 > t.unused_count
+            </#if>
+        </#if>
+        <#if functions??  && functions?size gt 0>
+				and (
+            <#list functions as thisfunc>
+                <#if thisfunc??  && thisfunc?size gt 0>
+	           		 	(
+                    <#list thisfunc as selffunc>
+                        ${selffunc.sqlStr}
+                        <#if selffunc.funcType??  && selffunc.funcType?length gt 0>
+                            <#if selffunc.funcType = 0>
+	           		 			 			<
+                            </#if>
+                            <#if selffunc.funcType = 1>
+	           		 			 			=
+                            </#if>
+                            <#if selffunc.funcType = 2>
+	           		 			 			>
+                            </#if>
+                        <#else>
+	           		 			 	 like
+                        </#if>
+	           		 			'${selffunc.funcValue}'
+                        <#if selffunc_has_next> and</#if>
+                    </#list>
+           		 		)
+                    <#if thisfunc_has_next> or </#if>
+                </#if>
+            </#list>
+            )
+        </#if>
+        group by t.id
+
+        ]]>
+    </sql>
+
+    <!--查询已经使用的物品分类-->
+    <sql id="queryUsedGoodsType" isRead="true">
+        <![CDATA[
+        SELECT
+        t.goods_type
+        FROM
+        t_company_goods t
+        WHERE
+        t.company_id =:companyId
+        GROUP BY
+        t.goods_type
+        ]]>
+    </sql>
+
+    <!--查询物品是否存在-->
+    <sql id="queryCountByNameAndCompany" isRead="true">
+        <![CDATA[
+        SELECT
+        count(1)
+        FROM
+        t_company_goods t
+        WHERE
+        t.goods_name =:goodsName
+        AND t.company_id =:companyId
+        ]]>
+    </sql>
+
+
+    <!--批量删除物品分配-->
+    <sql id="batchDelete" >
+        <![CDATA[
+            delete from t_company_goods_range  where goods_id=:goodsId
+        ]]>
+    </sql>
+
+
+    <!--查询分配范围-->
+    <sql id="queryRange" >
+        <![CDATA[
+        SELECT
+        tor.id,
+        tor.organ_name 'name'
+        FROM
+        t_company_goods_range t
+        LEFT JOIN t_organ tor ON t.organ_id = tor.id
+        WHERE
+        t.goods_id =:id
+        ]]>
+    </sql>
+
+
+
+
+</sqlMap>
