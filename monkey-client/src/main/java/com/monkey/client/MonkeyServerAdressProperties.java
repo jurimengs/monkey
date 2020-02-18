@@ -13,5 +13,5 @@ import lombok.Data;
 public class MonkeyServerAdressProperties {
     private String ip;
     private int port;
-    private int timeOut;
+    private int timeOut=1000;
 }

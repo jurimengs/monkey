@@ -45,7 +45,7 @@ public class ClientHandler extends SimpleChannelInboundHandler<RpcResponse>{
         try {
             // 由于 channelRead0 与业务请求主线程是异步的， 因此这里利用 channelPromise 做一个等待，并设置等待超时时间
             log.debug("尝试等待数据接收完成....");
-            channelPromise.await(timeOut, TimeUnit.SECONDS);
+            channelPromise.await(timeOut, TimeUnit.MILLISECONDS);
             // 等待到期了，还没收到数据
             if(response == null) {
                 log.error("请求超时");

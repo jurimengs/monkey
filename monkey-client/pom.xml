@@ -21,7 +21,7 @@
         </dependency>
         <dependency>
             <groupId>com.memory</groupId>
-            <artifactId>monkey-base</artifactId>
+            <artifactId>monkey-db</artifactId>
         </dependency>
         
 <!--    个性化jar开始    -->

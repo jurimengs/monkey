@@ -1,9 +1,8 @@
 package org.monkey.db.core;
 
 import org.junit.Test;
+import org.monkey.db.face.connection.Connection;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import com.monkey.client.Connection;
 
 public class MonkeyClientTest {
     @Autowired

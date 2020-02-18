@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.monkey.db.face.connection.Connection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -32,6 +33,7 @@ public class DefaultConnection implements Connection {
 
     @Override
     public void save(Object object) {
+        
         execute(object, "save", new Class<?>[] {
             Object.class
         } );

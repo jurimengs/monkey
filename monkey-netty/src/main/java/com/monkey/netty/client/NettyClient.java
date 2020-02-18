@@ -23,6 +23,9 @@ public class NettyClient implements InitializingBean {
     private Bootstrap bootstrap;
     private String host;
     private int port;
+    /**
+     * millisecond
+     */
     private int timeOut;
  
     //连接服务端的端口号地址和端口号

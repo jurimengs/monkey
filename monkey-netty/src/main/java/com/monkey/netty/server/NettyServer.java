@@ -2,6 +2,7 @@ package com.monkey.netty.server;
 
 import org.springframework.beans.factory.InitializingBean;
 
+import com.alibaba.fastjson.parser.ParserConfig;
 import com.monkey.netty.kryo.ServerJSONDecoder;
 import com.monkey.netty.kryo.ServerJSONEncoder;
 
@@ -23,6 +24,7 @@ public class NettyServer implements InitializingBean {
     private BusinessExecutor businessExecutor;
 
     public void bind() throws Exception {
+        ParserConfig.getGlobalInstance().setAutoTypeSupport(true);
         EventLoopGroup bossGroup = new NioEventLoopGroup(1); // bossGroup就是parentGroup，是负责处理TCP/IP连接的
         EventLoopGroup workerGroup = new NioEventLoopGroup(); // workerGroup就是childGroup,是负责处理Channel(通道)的I/O事件
 
