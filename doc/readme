@@ -1,0 +1,16 @@
+server需要通用性，就必需要对数据对象有一个统一的模型， 
+对于业务线上所有的entity ， 要能具备将其转换成 数据模型的能力， 最终整理成一个能入库的 sql
+
+所以理想的模型是， 统一数据结构 ， 要具备按表检索的能力， 要具备针对某一个数据对象 的某一个属性CRUD的能力
+
+因此提出数据结构如下
+table_name:
+    datas:[
+        data: {
+            key:value
+            key:value
+            key:value
+            key:value
+            key:value
+        }
+    ]
