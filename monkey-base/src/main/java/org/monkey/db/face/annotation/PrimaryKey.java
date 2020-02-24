@@ -8,13 +8,13 @@ import java.lang.annotation.Target;
 
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-public @interface Id {
+@Target(ElementType.TYPE)
+public @interface PrimaryKey {
 
     /**
      * 字段值（驼峰命名方式，该值可无）
      */
-    String value() default "";
+    String value();
 
 
 }

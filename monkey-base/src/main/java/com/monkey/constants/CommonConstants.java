@@ -4,7 +4,6 @@ package com.monkey.constants;
 /**
  * 公用常量类
  *
- * @author zhangen
  */
 public class CommonConstants {
 

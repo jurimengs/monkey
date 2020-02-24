@@ -1,12 +1,15 @@
 package com.org.test.controller;
 
-import org.monkey.db.face.annotation.Id;
+import javax.persistence.Entity;
+
+import org.monkey.db.face.annotation.PrimaryKey;
 
 import lombok.Data;
 
 @Data
+@Entity(name = "t_test")
+@PrimaryKey("id")
 public class TestEntity {
-    @Id
     private String id;
     private String name;
 }

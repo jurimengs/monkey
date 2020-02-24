@@ -1,15 +1,17 @@
 package org.monkey.db.core;
 
 import org.junit.Test;
-import org.monkey.db.face.connection.Connection;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import com.monkey.client.MonkeyClientConnection;
 
 public class MonkeyClientTest {
     @Autowired
-    private Connection con; 
+    private MonkeyClientConnection con; 
     
     @Test
     public void TestAdd() {
+        // TODO 
         Object object = null;
         con.save(object );
     }

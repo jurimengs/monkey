@@ -1,28 +1,27 @@
 package org.monkey.db.core.store;
 
+import java.util.Map;
+
 import com.alibaba.fastjson.JSONObject;
 
-public class StoreNode<K> {
-    private int hashCode; // this hashCode is the code of "value"
-    private Object value;
-    private K key;
-    private StoreNode<K> next;
-    private StoreNode<K> prev;
+public class StoreNode {
+    private int hashCode; // this hashCode is the code of "key"
+    private Map<String, Object> value;
+    private String key;
+    private StoreNode next;
+    private StoreNode prev;
 
-    public StoreNode(K key, Object value, StoreNode<K> next) {
+    public StoreNode(String key, Map<String, Object> value, StoreNode next) {
         this.key = key;
         this.next = next;
         setObjectValue(value);
     }
 
-    public Object getObjectValue() {
+    public Map<String, Object> getObjectValue() {
         return value;
     }
 
-    public void setObjectValue(Object value) {
-        if(value != null) {
-            this.hashCode = value.hashCode();
-        }
+    public void setObjectValue(Map<String, Object> value) {
         this.value = value; 
     }
     
@@ -37,27 +36,28 @@ public class StoreNode<K> {
         return this.hashCode;
     }
 
-    public K getKey() {
+    public String getKey() {
         return key;
     }
 
-    public void setKey(K key) {
+    public void setKey(String key) {
+        this.hashCode = key.hashCode();
         this.key = key;
     }
 
-    public StoreNode<K> getNext() {
+    public StoreNode getNext() {
         return next;
     }
 
-    public void setNext(StoreNode<K> next) {
+    public void setNext(StoreNode next) {
         this.next = next;
     }
 
-    public StoreNode<K> getPrev() {
+    public StoreNode getPrev() {
         return prev;
     }
 
-    public void setPrev(StoreNode<K> prev) {
+    public void setPrev(StoreNode prev) {
         this.prev = prev;
     }
 

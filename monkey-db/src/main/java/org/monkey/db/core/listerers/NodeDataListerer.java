@@ -1,7 +1,12 @@
 package org.monkey.db.core.listerers;
 
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -21,13 +26,13 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Setter
-public class NodeEventListener implements EventListener {
+public class NodeDataListerer implements EventListener {
     
     /**
      * @param persistFirstTimeAfter timer will execute after ${persistFirstTimeAfter} seconds
      * @param persistFrequency timer execute per ${persistFrequency} times 
      */
-    public NodeEventListener() {
+    public NodeDataListerer() {
         this.run();
     }
     
@@ -35,7 +40,7 @@ public class NodeEventListener implements EventListener {
      * @param persistFirstTimeAfter timer will execute after ${persistFirstTimeAfter} seconds
      * @param persistFrequency timer execute per ${persistFrequency} times 
      */
-    public NodeEventListener(int persistFirstTimeAfter, int persistFrequency, Executor executor) {
+    public NodeDataListerer(int persistFirstTimeAfter, int persistFrequency, Executor executor) {
         this.persistFirstTimeAfter = persistFirstTimeAfter;
         this.persistFrequency = persistFrequency;
         this.executor = executor;
@@ -44,8 +49,22 @@ public class NodeEventListener implements EventListener {
 
     @Override
     public void addEvent(Event operate) {
-        synchronized (lock) {
-            queue.add(operate);
+        String tableName = operate.getStore().getTableName();
+        // TODO 加锁
+        if(!eventCache.containsKey(tableName)) {
+            synchronized (tableName) {
+                if(!eventCache.containsKey(tableName)) {
+                    // 重复判断 ，以防后入线程做重复操作
+                    List<Event> list = new LinkedList<>();
+                    list.add(operate);
+                    eventCache.put(tableName, list);
+                }
+            }
+        } else {
+            List<Event> list = eventCache.get(tableName);
+            if(!list.contains(operate)) {
+                list.add(operate);
+            }
         }
     }
     
@@ -56,25 +75,30 @@ public class NodeEventListener implements EventListener {
         taskExecutor.scheduleAtFixedRate(new PersistTask(), persistFirstTimeAfter, persistFrequency, TimeUnit.SECONDS);
     }
     
-    private LinkedBlockingQueue<Event> getQueueCopy() {
-        LinkedBlockingQueue<Event> queueCopy = null;
+    private Map<String, List<Event>> getCacheCopy() {
+        Map<String, List<Event>> cache = null;
         synchronized (lock) {
-            queueCopy = queue;
-            queue = new LinkedBlockingQueue<>();
+            cache = eventCache;
+            eventCache = new HashMap<>();
         }
-        return queueCopy;
+        return cache;
     }
 
     private class PersistTask implements Runnable {
         @Override
         public void run() {
             log.debug("listening ... ");
-            LinkedBlockingQueue<Event> queueCopy = getQueueCopy();
-            log.info("task count to deal {}", queueCopy.size());
+            Map<String, List<Event>> cacheCopy = getCacheCopy();
+            log.info("task count to deal {}", cacheCopy.size());
             
-            Event poll = null;
-            while ((poll = queueCopy.poll()) != null) {
-                executor.execute(poll);
+            // <tableName, Event>
+            for (Iterator<Entry<String, List<Event>>> iterator = cacheCopy.entrySet().iterator(); iterator.hasNext();) {
+                Entry<String, List<Event>> next = iterator.next();
+                List<Event> events = next.getValue();
+                for (Event tmp : events) {
+                    executor.execute(tmp);
+                }
+                
             }
         }
         
@@ -88,7 +112,7 @@ public class NodeEventListener implements EventListener {
     //
     private Executor executor;
     // 
-    private LinkedBlockingQueue<Event> queue = new LinkedBlockingQueue<>();
+    private Map<String, List<Event>> eventCache = new HashMap<>();
     // 单线程执行
     private ScheduledExecutorService taskExecutor = Executors.newSingleThreadScheduledExecutor();
 }

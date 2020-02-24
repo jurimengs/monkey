@@ -3,25 +3,25 @@ package com.monkey.exceptions;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * @Description 拦截异常后，将信息返回前端的异常类
- * 
- * @author zhouman 2019年1月20日
  */
-public class TellUserMessageException extends RuntimeException {
-    private static final long serialVersionUID = -2483604307238761050L;
+public class MetadataReaderException extends RuntimeException {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = -5909481057394521259L;
     private String code;
     private String message;
 
-    public TellUserMessageException() {
+    public MetadataReaderException() {
         super();
     }
 
-    public TellUserMessageException(String message) {
+    public MetadataReaderException(String message) {
         this.code = StringUtils.EMPTY;
         this.message = message;
     }
 
-    public TellUserMessageException(int code, String message) {
+    public MetadataReaderException(int code, String message) {
         this.code = StringUtils.EMPTY;
         this.message = message;
     }
@@ -42,4 +42,6 @@ public class TellUserMessageException extends RuntimeException {
         this.message = message;
     }
 
+
+    
 }

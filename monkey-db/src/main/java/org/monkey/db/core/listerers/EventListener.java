@@ -1,9 +1,9 @@
 package org.monkey.db.core.listerers;
 
-import org.monkey.db.core.Operate;
+import org.monkey.db.core.Event;
 
 public interface EventListener {
-    void addEvent(Operate operate);
+    void addEvent(Event operate);
     
     void run();
     

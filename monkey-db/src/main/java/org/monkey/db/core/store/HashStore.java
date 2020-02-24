@@ -1,70 +1,93 @@
 package org.monkey.db.core.store;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.monkey.db.core.EventType;
-import org.monkey.db.core.Executor;
-import org.monkey.db.core.Operate;
-import org.monkey.db.core.OperateExecutor;
-import org.monkey.db.core.Searcher;
+import org.monkey.db.core.Event;
+import org.monkey.db.core.executor.Executor;
 import org.monkey.db.core.listerers.EventListener;
-import org.monkey.db.core.listerers.NodeEventListener;
+import org.monkey.db.core.listerers.NodeDataListerer;
 
 import com.alibaba.fastjson.JSONArray;
+import com.monkey.base.KeyValue;
+import com.monkey.exceptions.DataException;
 
-public class HashStore<K> implements Searcher<K> {
+public class HashStore implements Searcher {
     private final static int PERSIST_FIRST_TIMEAFTER = 4;
     // 持久化触发阈值 
     private final static int PERSIST_FREQUENCY = 5; 
     // 
     private final static int linkSize = 16;
     private EventListener eventListener;
+    private String tableName;
     
-    @SuppressWarnings("unchecked")
-    private Link<K>[] nodeLinks = new Link[linkSize];
+    private Link[] nodeLinks = new Link[linkSize];
     
-    public HashStore() {
-        this(new OperateExecutor(), PERSIST_FIRST_TIMEAFTER, PERSIST_FREQUENCY);
+    public HashStore(Executor executor, String tableName) {
+        this(executor, tableName, PERSIST_FIRST_TIMEAFTER, PERSIST_FREQUENCY);
     }
     
-    public HashStore(Executor executor) {
-        this(executor, PERSIST_FIRST_TIMEAFTER, PERSIST_FREQUENCY);
-    }
-    
-    public HashStore(int persistFirstTimeAfter, int persistFrequency) {
-        this(new OperateExecutor(), persistFirstTimeAfter, persistFrequency);
-    }
-    
-    public HashStore(Executor executor, int persistFirstTimeAfter, int persistFrequency) {
+    public HashStore(Executor executor, String tableName, int persistFirstTimeAfter, int persistFrequency) {
         for (int i = 0; i < nodeLinks.length; i++) {
-            nodeLinks[i] = new Link<>(i);
+            nodeLinks[i] = new Link(i);
         }
-        eventListener = new NodeEventListener(persistFirstTimeAfter, persistFrequency, executor);
+        this.tableName = tableName;
+        eventListener = new NodeDataListerer(persistFirstTimeAfter, persistFrequency, executor);
     }
     
     @Override
-    public void put(K key, Object object) {
+    public void add(String keyFieldName, List<KeyValue> datas) throws DataException {
+        Map<String, Object> dataMap = tranfser(datas);
+        String key = (String) dataMap.get(keyFieldName);
         // get the link from links array
-        Link<K> link = getLink(key);
+        Link link = getLink(key);
+        if(link.getNodeByKey(key) != null) {
+            throw new DataException("data exist");
+        }
         
-        StoreNode<K> node = link.getNodeByKey(key);
+        link.add(key, dataMap);
+        System.out.println(link.size());
+
+        Event operate = new Event();
+        operate.setEventType(EventType.ADD);
+        operate.setKeyFieldValue(key);
+        operate.setKeyFieldName(keyFieldName);
+        operate.setStore(this);
+        eventListener.addEvent(operate);
+    }
+    
+    @Override
+    public void update(String keyFieldName, List<KeyValue> datas) {
+        Map<String, Object> dataMap = tranfser(datas);
+        String key = (String) dataMap.get(keyFieldName);
+        // get the link from links array
+        Link link = getLink(key);
         
+        StoreNode node = link.getNodeByKey(key);
         if(node != null) {
-            // 直接替换
-            node.setKey(key);
-            node.setObjectValue(object);
-            addEvent(object, EventType.UPDATE);
-        } else {
-            // 如果没有的话， 则添加进去
-            link.add(key, object);
-            addEvent(object, EventType.ADD);
+            Map<String, Object> objectValue = node.getObjectValue();
+            for(KeyValue kv : datas) {
+                objectValue.put(kv.getKey(), kv.getValue());
+            }
+
+            Event operate = new Event();
+            operate.setEventType(EventType.UPDATE);
+            operate.setKeyFieldValue(key);
+            operate.setKeyFieldName(keyFieldName);
+            operate.setStore(this);
+            eventListener.addEvent(operate);
         }
     }
 
     @Override
-    public Object get(K key) {
+    public Map<String, Object> get(String key) {
         // get the link from links array
-        Link<K> link = getLink(key);
-        StoreNode<K> node = link.getNodeByKey(key);
+        Link link = getLink(key);
+        StoreNode node = link.getNodeByKey(key);
         
         if(node == null) {
             return null;
@@ -73,8 +96,8 @@ public class HashStore<K> implements Searcher<K> {
     }
 
     @Override
-    public void remove(K key) {
-        Link<K> link = getLink(key);
+    public void remove(String key) {
+        Link link = getLink(key);
         link.remove(key);
     }
     
@@ -113,21 +136,30 @@ public class HashStore<K> implements Searcher<K> {
         return thisArr.toJSONString();
     }
     
-    // 添加事件
-    private void addEvent(Object object, EventType eventType) {
-        Operate operate = new Operate();
-        operate.setEventType(eventType);
-        operate.setObject(object);
-        eventListener.addEvent(operate);
-    }
-
-    private Link<K> getLink(K key) {
+    private Link getLink(String key) {
         // get hashCode first
         int hashCode = key.hashCode();
         // hash it for index of array
         int hash = hash(hashCode);
         // get the link from links array
         return nodeLinks[hash];
+    }
+
+    private Map<String, Object> tranfser(List<KeyValue> datas) {
+        // why map: map can update one field directly instead of  catching out the whole object 
+        Map<String, Object> dataMap = new HashMap<>();
+        if(CollectionUtils.isNotEmpty(datas)) {
+            int size = datas.size();
+            for (int i = 0; i < size; i++) {
+                KeyValue keyValue = datas.get(i);
+                dataMap.put(keyValue.getKey(), keyValue.getValue());
+            }
+        }
+        return dataMap;
+    }
+
+    public String getTableName() {
+        return tableName;
     }
     
 }

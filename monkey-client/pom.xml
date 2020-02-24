@@ -21,9 +21,13 @@
         </dependency>
         <dependency>
             <groupId>com.memory</groupId>
-            <artifactId>monkey-db</artifactId>
+            <artifactId>monkey-base</artifactId>
         </dependency>
-        
+        <dependency>
+            <groupId>org.hibernate.javax.persistence</groupId>
+            <artifactId>hibernate-jpa-2.0-api</artifactId>
+        </dependency>
+            
 <!--    个性化jar开始    -->
         <dependency>
             <groupId>org.projectlombok</groupId>

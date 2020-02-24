@@ -2,7 +2,7 @@ package com.monkey.server.sync;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.monkey.db.core.Operate;
+import org.monkey.db.core.Event;
 import org.monkey.db.core.listerers.EventListener;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Component;
@@ -21,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 @ConditionalOnBean(value = ClusterProperties.class)
 public class ClusterSynchronizer {
 
-    public void doSynchronize(LinkedBlockingQueue<Operate> queueCopy) {
+    public void doSynchronize(LinkedBlockingQueue<Event> queueCopy) {
         log.info("ClusterExecutor.doSynchronize size: {}", queueCopy.size());
         // TODO 
     }

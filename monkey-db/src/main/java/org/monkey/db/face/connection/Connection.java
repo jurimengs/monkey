@@ -2,19 +2,22 @@ package org.monkey.db.face.connection;
 
 import java.util.List;
 
+import com.monkey.base.DataModelIn;
+import com.monkey.exceptions.DataException;
+
 /**
  * @author jurimengs
  *
  */
 public interface Connection {
-    void update(Object object);
+    void update(DataModelIn object);
     
-    void save(Object object);
+    void save(DataModelIn object) throws DataException;
     
-    void delete(Object object);
+    void delete(DataModelIn object);
     
-    Object select(Object object);
+    Object select(DataModelIn object);
     
-    List<Object> selectList(Object object);
+    List<Object> selectList(DataModelIn object);
     
 }
