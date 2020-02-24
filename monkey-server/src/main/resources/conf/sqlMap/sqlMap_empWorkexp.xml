@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<sqlMap namespace="EmpWorkexp">
-	<sql id="deleteByLizhiId">
-		<![CDATA[
-			DELETE FROM t_emp_workexp WHERE lizhi_id = :lizhiId
-		]]>
-	</sql>
-</sqlMap>

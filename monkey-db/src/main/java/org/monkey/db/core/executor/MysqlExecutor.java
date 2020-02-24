@@ -2,7 +2,6 @@ package org.monkey.db.core.executor;
 
 import java.util.Map;
 
-import org.apache.ibatis.binding.MapperMethod.SqlCommand;
 import org.apache.ibatis.jdbc.SQL;
 import org.monkey.db.core.Event;
 import org.monkey.db.core.EventType;
