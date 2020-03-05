@@ -24,5 +24,6 @@ public class ClusterSynchronizer {
     public void doSynchronize(LinkedBlockingQueue<Event> queueCopy) {
         log.info("ClusterExecutor.doSynchronize size: {}", queueCopy.size());
         // TODO 
+        
     }
 }

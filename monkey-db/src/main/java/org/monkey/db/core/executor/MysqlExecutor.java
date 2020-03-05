@@ -1,5 +1,6 @@
 package org.monkey.db.core.executor;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.ibatis.jdbc.SQL;
@@ -19,6 +20,13 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class MysqlExecutor implements Executor {
+    private static Map<EventType, String> SQL_MODULE = new HashMap<>();
+    static {
+        SQL_MODULE.put(EventType.ADD, "insert into #{TABLE} (#{FIELDS}) values ()");
+        SQL_MODULE.put(EventType.UPDATE, "update #{TABLE} set (#{FIELDS}) where (#{CONDITIONS})");
+        SQL_MODULE.put(EventType.DELETE, "delete from #{TABLE} where ()");
+    }
+    
     @Override
     public void execute(Event poll) {
         HashStore store = poll.getStore();
@@ -29,10 +37,10 @@ public class MysqlExecutor implements Executor {
         
         Map<String, Object> map = store.get(keyFieldValue); // 主键对应的对象所有非空字段 值 
         
-        
         // poll: {"eventType":"ADD","object":{"datas":[{"key":"name","value":"name"},{"key":"id","value":"111"}],"operateTime":1582436570194,"primaryKey":"id","tableName":"t_test","version":0}}
-//        SqlCommand sql = new SqlCommand(configuration, mapperInterface, method);
         SQL sql = new SQL();
         log.info("poll: {}", JSON.toJSONString(poll));
     }
+    
+    
 }
