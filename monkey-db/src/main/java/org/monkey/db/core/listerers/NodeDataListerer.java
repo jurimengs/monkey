@@ -9,6 +9,8 @@ import java.util.Map.Entry;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.monkey.db.core.Event;
 import org.monkey.db.core.executor.Executor;
@@ -27,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Setter
 public class NodeDataListerer implements EventListener {
+    private Lock addEventLock = new ReentrantLock(false);
     
     /**
      * @param persistFirstTimeAfter timer will execute after ${persistFirstTimeAfter} seconds
@@ -50,20 +53,25 @@ public class NodeDataListerer implements EventListener {
     @Override
     public void addEvent(Event operate) {
         String tableName = operate.getStore().getTableName();
-        // TODO 加锁
         if(!eventCache.containsKey(tableName)) {
-            synchronized (tableName) {
-                if(!eventCache.containsKey(tableName)) {
-                    // 重复判断 ，以防后入线程做重复操作
+            try {
+                boolean locked = addEventLock.tryLock();
+                if(locked) {
                     List<Event> list = new LinkedList<>();
                     list.add(operate);
                     eventCache.put(tableName, list);
                 }
+            } finally {
+                addEventLock.unlock();
             }
+            
         } else {
             List<Event> list = eventCache.get(tableName);
             if(!list.contains(operate)) {
-                list.add(operate);
+                boolean locked = addEventLock.tryLock();
+                if(locked) {
+                    list.add(operate);
+                }
             }
         }
     }
