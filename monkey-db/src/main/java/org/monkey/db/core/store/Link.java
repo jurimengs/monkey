@@ -20,7 +20,6 @@ public class Link {
     }
 
     /**
-     * 线程不安全的
      */
     public void add(String key, Map<String, Object> dataMap) {
         // System.out.println("this:" + JSON.toJSONString(this));

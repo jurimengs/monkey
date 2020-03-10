@@ -7,5 +7,4 @@ public interface EventListener {
     
     void run();
     
-    public static final String CLUSTER_SYNCHRONIZER = "clusterSynchronizer";
 }

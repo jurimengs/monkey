@@ -50,8 +50,7 @@ public class HashStore implements Searcher {
         }
         
         link.add(key, dataMap);
-        System.out.println(link.size());
-
+        
         Event operate = new Event();
         operate.setEventType(EventType.ADD);
         operate.setKeyFieldValue(key);

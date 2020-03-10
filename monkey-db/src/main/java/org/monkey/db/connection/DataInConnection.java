@@ -2,6 +2,7 @@ package org.monkey.db.connection;
 
 import java.lang.reflect.Field;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.monkey.db.core.PrimaryFieldCache;
@@ -28,6 +29,9 @@ import lombok.extern.slf4j.Slf4j;
 public class DataInConnection implements Connection {
     private PrimaryFieldCache cache = PrimaryFieldCache.getInstance();
     @Autowired
+    private SyncHandler syncHandler;
+    
+    @Autowired
     private Executor executor;
 
     @Override
@@ -45,7 +49,10 @@ public class DataInConnection implements Connection {
         Store store = Tabels.getInstance().getStore(tableName, executor);
         List<KeyValue> datas = object.getDatas();
         store.add(keyFieldName, datas);
-        
+
+        // 拿到需要增量同步的 ip
+        Map<String, Boolean> incrSychClusterIp = Tabels.getInstance().getIncrSychClusterIp();
+        syncHandler.executeSych(incrSychClusterIp, object);
     }
 
     @Override
