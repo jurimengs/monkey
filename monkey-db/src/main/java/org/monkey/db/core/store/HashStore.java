@@ -134,6 +134,14 @@ public class HashStore implements Searcher {
         }
         return thisArr.toJSONString();
     }
+
+    public String getTableName() {
+        return tableName;
+    }
+    
+    public Link[] getAllLink() {
+        return nodeLinks;
+    }
     
     private Link getLink(String key) {
         // get hashCode first
@@ -155,10 +163,6 @@ public class HashStore implements Searcher {
             }
         }
         return dataMap;
-    }
-
-    public String getTableName() {
-        return tableName;
     }
     
 }

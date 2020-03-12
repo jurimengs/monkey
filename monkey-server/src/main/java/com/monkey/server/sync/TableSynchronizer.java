@@ -28,13 +28,14 @@ public class TableSynchronizer {
     private DataSendHandler tableSynchronizerHandler;
 
     /**
-     * 存量同步
      * 存量同步的时候就要标记，  要开始增量同步了
      * @Title: stockSynchronize
+     * @param ip 请求同步的节点 ip， 一般为首次加入集群的节点
      * @author zhouman
-     * @date 2020-03-10 11:42:46
+     * @date 2020-03-10 05:51:34
      */
     public void stockSynchronize(String ip) {
+        log.debug("存量同步到: {}", ip);
         Map<String, Store> storeCache = Tabels.getInstance().getStoreCacheClone(ip);
         Set<Entry<String, Store>> entrySet = storeCache.entrySet();
         for (Iterator<Entry<String, Store>> iterator = entrySet.iterator(); iterator.hasNext();) {
@@ -52,5 +53,6 @@ public class TableSynchronizer {
      */
     public void incrSynchronize(Object obj) {
         // 通过 netty 发
+        
     }
 }

@@ -27,4 +27,6 @@ public interface Store {
     Map<String, Object> get(String key);
 
     void remove(String key);
+    
+    Link[] getAllLink();
 }
