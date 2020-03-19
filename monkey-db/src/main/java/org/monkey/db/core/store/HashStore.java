@@ -6,8 +6,8 @@ import java.util.Map;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.monkey.db.core.EventType;
-import org.monkey.db.core.Event;
+import org.monkey.db.core.event.Event;
+import org.monkey.db.core.event.EventType;
 import org.monkey.db.core.executor.Executor;
 import org.monkey.db.core.listerers.EventListener;
 import org.monkey.db.core.listerers.NodeDataListerer;

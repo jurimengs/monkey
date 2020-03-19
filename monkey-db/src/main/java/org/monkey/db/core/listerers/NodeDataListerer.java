@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.monkey.db.core.Event;
+import org.monkey.db.core.event.Event;
 import org.monkey.db.core.executor.Executor;
 
 import lombok.Setter;

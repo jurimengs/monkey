@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class OOMDump {
+    // -Xmx10M -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=d://
     static class OOMIntsmaze {
         public byte[] placeholder = new byte[64 * 1024];
     }

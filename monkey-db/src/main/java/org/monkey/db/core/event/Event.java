@@ -1,4 +1,4 @@
-package org.monkey.db.core;
+package org.monkey.db.core.event;
 
 import org.apache.commons.lang3.StringUtils;
 import org.monkey.db.core.store.HashStore;

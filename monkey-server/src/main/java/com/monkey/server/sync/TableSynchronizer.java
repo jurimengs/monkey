@@ -22,10 +22,10 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Component
-@ConditionalOnBean(value = DataSendHandler.class)
+@ConditionalOnBean(value = ClusterProperties.class)
 public class TableSynchronizer {
     @Autowired
-    private DataSendHandler tableSynchronizerHandler;
+    private DataSendHandler dataSendHandler;
 
     /**
      * 存量同步的时候就要标记，  要开始增量同步了
@@ -40,7 +40,7 @@ public class TableSynchronizer {
         Set<Entry<String, Store>> entrySet = storeCache.entrySet();
         for (Iterator<Entry<String, Store>> iterator = entrySet.iterator(); iterator.hasNext();) {
             Entry<String, Store> entry = iterator.next();
-            tableSynchronizerHandler.synchronize(entry);
+            dataSendHandler.synchronize(entry);
         }
     }
     

@@ -1,6 +1,6 @@
 package org.monkey.db.core.executor;
 
-import org.monkey.db.core.Event;
+import org.monkey.db.core.event.Event;
 
 import com.alibaba.fastjson.JSON;
 
