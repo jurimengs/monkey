@@ -3,8 +3,8 @@ package com.monkey.netty.server;
 import org.springframework.beans.factory.InitializingBean;
 
 import com.alibaba.fastjson.parser.ParserConfig;
-import com.monkey.netty.kryo.ServerJSONDecoder;
-import com.monkey.netty.kryo.ServerJSONEncoder;
+import com.monkey.netty.serializer.ServerJSONDecoder;
+import com.monkey.netty.serializer.ServerJSONEncoder;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;

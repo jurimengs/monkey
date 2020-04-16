@@ -2,8 +2,8 @@ package com.monkey.netty.client;
 
 import org.springframework.beans.factory.InitializingBean;
 
-import com.monkey.netty.kryo.ClientJSONDecoder;
-import com.monkey.netty.kryo.ClientJSONEncoder;
+import com.monkey.netty.serializer.ClientJSONDecoder;
+import com.monkey.netty.serializer.ClientJSONEncoder;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;

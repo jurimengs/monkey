@@ -1,7 +1,8 @@
-package com.monkey.netty.kryo;
+package com.monkey.netty.serializer;
 
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.serializer.SerializerFeature;
+import com.monkey.netty.client.RpcRequest;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -10,17 +11,16 @@ import io.netty.util.ReferenceCountUtil;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class ServerJSONEncoder extends MessageToByteEncoder<Object> {
-    
+public class ClientJSONEncoder extends MessageToByteEncoder<RpcRequest> {
     @Override
-    protected void encode(ChannelHandlerContext channelHandlerContext, Object msg, ByteBuf out) throws Exception {
-        log.debug("服务端序列化 ...");
+    protected void encode(ChannelHandlerContext channelHandlerContext, RpcRequest msg, ByteBuf out) throws Exception {
+        log.debug("客户端序列化 ...");
         try {
-            byte[] data = JSONObject.toJSONString(msg, SerializerFeature.WriteClassName).getBytes() ;
+            byte data [] = JSONObject.toJSONString(msg, SerializerFeature.WriteClassName).getBytes();
             out.writeBytes(data) ;
         } catch (Exception e) {
             ReferenceCountUtil.release(msg);
-            log.error("服务端编码返回异常失败", e);
+            log.error("ClientJSONEncoder error ...", e);
         }
     }
     
