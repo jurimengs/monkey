@@ -67,7 +67,7 @@ public class Tabels {
     }
 
     /**
-     * 记录某个请求同步的节点，存量数据的位置
+     * 记录某个节点ip 在请求同步到达的时候，存量数据的位置
      * @Title: pointStockPosition
      * @Description: TODO(描述)
      * @param ip
