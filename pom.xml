@@ -16,7 +16,7 @@
     <version>0.0.1</version>
 
     <properties>
-    
+        <java.version>1.8</java.version>
         <monkey.version>0.0.1</monkey.version>
         <activemq.version>5.15.8</activemq.version>
         <antlr2.version>2.7.7</antlr2.version>
@@ -541,5 +541,6 @@
         <module>monkey-base</module>
         <module>monkey-netty</module>
         <module>monkey-client-demo</module>
+        <module>monkey-test</module>
     </modules>
 </project>
