@@ -43,6 +43,11 @@ public class MonkeyClientConnection {
             DataModelIn.class
         } );
     }
+    public void saveList(List<?> objects) {
+        objects.stream().forEach(object -> {
+            save(object);
+        });
+    }
 
     
     public void delete(Object object) {
