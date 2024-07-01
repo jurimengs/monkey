@@ -542,5 +542,6 @@
         <module>monkey-netty</module>
         <module>monkey-client-demo</module>
         <module>monkey-test</module>
+        <module>monkey-robot</module>
     </modules>
 </project>
