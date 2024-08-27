@@ -487,7 +487,19 @@
                 <artifactId>swagger-bootstrap-ui</artifactId>
                 <version>1.9.6</version>
             </dependency>
-        
+
+            <dependency>
+                <groupId>org.jsoup</groupId>
+                <artifactId>jsoup</artifactId>
+                <version>1.14.3</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.hutool</groupId>
+                <artifactId>hutool-core</artifactId>
+                <!--            <version>5.4.7</version>-->
+                <version>5.8.11</version>
+            </dependency>
+
         </dependencies>
 
     </dependencyManagement>
@@ -543,5 +555,6 @@
         <module>monkey-client-demo</module>
         <module>monkey-test</module>
         <module>monkey-robot</module>
+        <module>spider</module>
     </modules>
 </project>
